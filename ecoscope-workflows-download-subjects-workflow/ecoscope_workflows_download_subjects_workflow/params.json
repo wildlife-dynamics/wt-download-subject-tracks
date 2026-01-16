@@ -85,7 +85,7 @@
         },
         "include_subjectsource_details": {
           "default": false,
-          "title": "Include Subjectsource Details",
+          "title": "Include Subject Source Details",
           "type": "boolean",
           "description": "Whether or not to include subject source details",
           "ecoscope:advanced": true

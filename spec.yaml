@@ -11,6 +11,7 @@ requirements:
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 rjsf-overrides:
   properties:
+    Subject Group.properties.subject_obs.properties.include_details.default: true
     Generate Maps.properties.skip_map_generation.properties.skip.description: >-
       Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
     persist_tracks.properties.filename_prefix.default: "subject_tracks"

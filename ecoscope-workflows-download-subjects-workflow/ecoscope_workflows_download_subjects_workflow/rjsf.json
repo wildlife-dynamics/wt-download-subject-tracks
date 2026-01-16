@@ -82,7 +82,7 @@
               "description": "\u26a0\ufe0f The use of a group with mixed subtypes could lead to unexpected results"
             },
             "include_details": {
-              "default": false,
+              "default": true,
               "title": "Include Details",
               "type": "boolean",
               "description": "Whether or not to include observation details",
@@ -90,7 +90,7 @@
             },
             "include_subjectsource_details": {
               "default": false,
-              "title": "Include Subjectsource Details",
+              "title": "Include Subject Source Details",
               "type": "boolean",
               "description": "Whether or not to include subject source details",
               "ecoscope:advanced": true

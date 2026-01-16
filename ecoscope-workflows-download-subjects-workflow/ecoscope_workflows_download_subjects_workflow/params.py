@@ -35,7 +35,7 @@ class SubjectObs(BaseModel):
     include_subjectsource_details: Optional[bool] = Field(
         False,
         description="Whether or not to include subject source details",
-        title="Include Subjectsource Details",
+        title="Include Subject Source Details",
     )
 
 

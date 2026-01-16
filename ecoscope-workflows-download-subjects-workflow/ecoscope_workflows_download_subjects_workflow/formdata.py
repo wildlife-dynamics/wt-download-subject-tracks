@@ -28,14 +28,14 @@ class SubjectObs(BaseModel):
         title="Subject Group Name",
     )
     include_details: Optional[bool] = Field(
-        False,
+        True,
         description="Whether or not to include observation details",
         title="Include Details",
     )
     include_subjectsource_details: Optional[bool] = Field(
         False,
         description="Whether or not to include subject source details",
-        title="Include Subjectsource Details",
+        title="Include Subject Source Details",
     )
 
 
