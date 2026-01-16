@@ -14,6 +14,7 @@ rjsf-overrides:
     Subject Group.properties.subject_obs.properties.include_details.default: true
     Generate Maps.properties.skip_map_generation.properties.skip.description: >-
       Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
+    Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
     persist_tracks.properties.filename_prefix.default: "subject_tracks"
   
   uiSchema:
@@ -188,7 +189,7 @@ workflow:
         partial:
           var: "Subject Group Trajectory Map"
 
-      - name: Map Base Layers
+      - name: " "
         id: base_map_defs
         task: set_base_maps
 

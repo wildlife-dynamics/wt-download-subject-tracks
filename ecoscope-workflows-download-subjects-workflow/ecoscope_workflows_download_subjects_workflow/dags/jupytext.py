@@ -713,7 +713,7 @@ set_traj_map_title = (
 
 
 # %% [markdown]
-# ## Map Base Layers
+# ##
 
 # %%
 # parameters

@@ -388,7 +388,7 @@ class Groupers(BaseModel):
     )
     groupers: Optional[List[Union[ValueGrouper, TemporalGrouper]]] = Field(
         None,
-        description="            Specify how the data should be grouped to create the views for your dashboard.\n            This field is optional; if left blank, all the data will appear in a single view.\n            ",
+        description="            Specify how the data should be grouped to create the views for your dashboard or persisted data.\n            This field is optional; if left blank, all the data will appear in a single view.\n            ",
         title=" ",
     )
 
@@ -420,4 +420,4 @@ class Params(BaseModel):
     skip_map_generation: Optional[SkipMapGeneration] = Field(
         None, title="Skip Map Generation"
     )
-    base_map_defs: Optional[BaseMapDefs] = Field(None, title="Map Base Layers")
+    base_map_defs: Optional[BaseMapDefs] = Field(None, title=" ")

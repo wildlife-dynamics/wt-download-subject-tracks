@@ -250,7 +250,7 @@
               },
               "title": " ",
               "type": "array",
-              "description": "            Specify how the data should be grouped to create the views for your dashboard.\n            This field is optional; if left blank, all the data will appear in a single view.\n            "
+              "description": "            Specify how the data should be grouped to create the views for your dashboard or persisted data.\n            This field is optional; if left blank, all the data will appear in a single view.\n            "
             }
           },
           "type": "object",
@@ -500,7 +500,7 @@
                   }
                 ]
               },
-              "title": " ",
+              "title": "Map Base Layers",
               "type": "array",
               "description": "Select tile layers to use as base layers in map outputs. The first layer in the list will be the bottommost layer displayed.",
               "ecoscope:advanced": true
@@ -508,7 +508,7 @@
           },
           "type": "object",
           "required": [],
-          "title": "Map Base Layers"
+          "title": " "
         }
       }
     }
