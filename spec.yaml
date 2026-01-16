@@ -17,8 +17,8 @@ rjsf-overrides:
     persist_tracks.properties.filename_prefix.default: "subject_tracks"
   
   uiSchema:
-    Process Observations.filter_obs.filter_point_coords.items.ui:options.label: false
-    Process Observations.customize_columns.rename_columns.items.ui:options.label: false
+    Process Observation Relocations.filter_obs.filter_point_coords.items.ui:options.label: false
+    Transform to Trajectories.customize_columns.rename_columns.items.ui:options.label: false
     base_map_defs.base_maps.items.ui:options.label: false
 task-instance-defaults:
   skipif:
@@ -70,71 +70,11 @@ workflow:
     partial:
       subject_obs: ${{ workflow.subject_obs.return }}
 
-  - title: Process Observations
+  - title: Group and Split Data
     type: task-group
     description: >-
-      Process observations by applying filters, SQL queries, etc. Note that the data here includes all the columns from the previous steps and the normalized subject/observation details.
+      Configure grouping options and split the observations into groups for parallel processing.
     tasks:
-      - name: "Convert to timezone"
-        id: convert_to_user_timezone
-        task: convert_values_to_timezone
-        partial:
-          df: ${{ workflow.subject_obs.return }}
-          timezone: ${{ workflow.get_timezone.return }}
-          columns: ["fixtime"]
-
-      - name: Remove Column Prefix Extra
-        id: drop_extra_prefix
-        task: drop_column_prefix
-        partial:
-          df: ${{ workflow.convert_to_user_timezone.return }}
-          prefix: "extra__"
-          duplicate_strategy: "suffix"
-
-      - name: Filter Observation Relocations
-        id: filter_obs
-        task: apply_reloc_coord_filter
-        partial:
-          df: ${{ workflow.drop_extra_prefix.return }}
-          roi_gdf: null
-          roi_name: null
-          reset_index: false
-
-      - name: Trajectory Segment Filter
-        id: subject_traj
-        task: relocations_to_trajectory
-        partial:
-          relocations: ${{ workflow.filter_obs.return }}
-
-      - name: Remove Column Prefix Extra
-        id: drop_extra_prefix_traj
-        task: drop_column_prefix
-        partial:
-          df: ${{ workflow.subject_traj.return }}
-          prefix: "extra__"
-          duplicate_strategy: "suffix"
-
-      - name: Internally Process Columns
-        id: customize_columns_internally
-        task: map_columns
-        partial:
-          df: ${{ workflow.drop_extra_prefix_traj.return }}
-          rename_columns: {}
-          drop_columns: ["id"] # drop 'id' to avoid conflict with `id` in the index
-          retain_columns: []
-
-      - name: Process Columns
-        id: customize_columns
-        task: map_columns
-        partial:
-          df: ${{ workflow.customize_columns_internally.return }}
-
-      - name: Apply SQL Query
-        id: sql_query
-        task: apply_sql_query
-        partial:
-          df: ${{ workflow.customize_columns.return }}
-
       - name: Group Data
         id: groupers
         task: set_groupers
@@ -143,18 +83,113 @@ workflow:
         id: obs_add_temporal_index
         task: add_temporal_index
         partial:
-          df: ${{ workflow.sql_query.return }}
-          time_col: "segment_start"
+          df: ${{ workflow.subject_obs.return }}
+          time_col: "fixtime"
           groupers: ${{ workflow.groupers.return }}
           cast_to_datetime: true
           format: "mixed"
 
-      - name: Split Trajectory by Group
-        id: split_traj_groups
+      - name: Split Observations by Group
+        id: split_obs_groups
         task: split_groups
         partial:
           df: ${{ workflow.obs_add_temporal_index.return }}
           groupers: ${{ workflow.groupers.return }}
+
+  - title: Process Observation Relocations
+    type: task-group
+    description: >-
+      Process each group of observations by applying timezone conversion, filters, and coordinate filters.
+    tasks:
+      - name: "Convert to timezone"
+        id: convert_to_user_timezone
+        task: convert_values_to_timezone
+        partial:
+          timezone: ${{ workflow.get_timezone.return }}
+          columns: ["fixtime"]
+        mapvalues:
+          argnames: df
+          argvalues: ${{ workflow.split_obs_groups.return }}
+
+      - name: Remove Column Prefix Extra
+        id: drop_extra_prefix
+        task: drop_column_prefix
+        partial:
+          prefix: "extra__"
+          duplicate_strategy: "suffix"
+        mapvalues:
+          argnames: df
+          argvalues: ${{ workflow.convert_to_user_timezone.return }}
+
+      - name: Filter Observation Relocations
+        id: filter_obs
+        task: apply_reloc_coord_filter
+        partial:
+          roi_gdf: null
+          roi_name: null
+          reset_index: false
+        mapvalues:
+          argnames: df
+          argvalues: ${{ workflow.drop_extra_prefix.return }}
+
+  - title: Transform to Trajectories
+    type: task-group
+    description: >-
+      Convert filtered observations to trajectories and apply custom processing, SQL queries, and column mappings.
+    tasks:
+      - name: Trajectory Segment Filter
+        id: subject_traj
+        task: relocations_to_trajectory
+        mapvalues:
+          argnames: relocations
+          argvalues: ${{ workflow.filter_obs.return }}
+
+      - name: Remove Column Prefix Extra
+        id: drop_extra_prefix_traj
+        task: drop_column_prefix
+        partial:
+          prefix: "extra__"
+          duplicate_strategy: "suffix"
+        mapvalues:
+          argnames: df
+          argvalues: ${{ workflow.subject_traj.return }}
+
+      - name: Internally Process Columns
+        id: customize_columns_internally
+        task: map_columns
+        partial:
+          rename_columns: {}
+          drop_columns: ["id"] # drop 'id' to avoid conflict with `id` in the index
+          retain_columns: []
+        mapvalues:
+          argnames: df
+          argvalues: ${{ workflow.drop_extra_prefix_traj.return }}
+
+      - name: Process Columns
+        id: customize_columns
+        task: map_columns
+        mapvalues:
+          argnames: df
+          argvalues: ${{ workflow.customize_columns_internally.return }}
+
+      - name: Apply SQL Query
+        id: sql_query
+        task: apply_sql_query
+        mapvalues:
+          argnames: df
+          argvalues: ${{ workflow.customize_columns.return }}
+
+      - name: Add temporal index to trajectories
+        id: traj_add_temporal_index
+        task: add_temporal_index
+        partial:
+          time_col: "segment_start"
+          groupers: ${{ workflow.groupers.return }}
+          cast_to_datetime: true
+          format: "mixed"
+        mapvalues:
+          argnames: df
+          argvalues: ${{ workflow.sql_query.return }}
 
   - name: Persist Subject Trajectories
     id: persist_tracks
@@ -164,7 +199,7 @@ workflow:
       sanitize: true
     mapvalues:
       argnames: df
-      argvalues: ${{ workflow.split_traj_groups.return }}
+      argvalues: ${{ workflow.traj_add_temporal_index.return }}
     skipif:
       conditions:
         - never
@@ -179,7 +214,7 @@ workflow:
         task: maybe_skip_df
         mapvalues:
           argnames: df
-          argvalues: ${{ workflow.split_traj_groups.return }}
+          argvalues: ${{ workflow.traj_add_temporal_index.return }}
 
       # Widget Names
       - name: "Set Trajectory Map Title"

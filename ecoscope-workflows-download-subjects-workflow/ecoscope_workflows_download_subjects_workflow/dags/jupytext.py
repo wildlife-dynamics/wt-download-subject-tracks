@@ -264,269 +264,6 @@ warn_if_mixed_subtype = (
 
 
 # %% [markdown]
-# ## Convert to timezone
-
-# %%
-# parameters
-
-convert_to_user_timezone_params = dict()
-
-# %%
-# call the task
-
-
-convert_to_user_timezone = (
-    convert_values_to_timezone.set_task_instance_id("convert_to_user_timezone")
-    .handle_errors()
-    .with_tracing()
-    .skipif(
-        conditions=[
-            any_is_empty_df,
-            any_dependency_skipped,
-        ],
-        unpack_depth=1,
-    )
-    .partial(
-        df=subject_obs,
-        timezone=get_timezone,
-        columns=["fixtime"],
-        **convert_to_user_timezone_params,
-    )
-    .call()
-)
-
-
-# %% [markdown]
-# ## Remove Column Prefix Extra
-
-# %%
-# parameters
-
-drop_extra_prefix_params = dict()
-
-# %%
-# call the task
-
-
-drop_extra_prefix = (
-    drop_column_prefix.set_task_instance_id("drop_extra_prefix")
-    .handle_errors()
-    .with_tracing()
-    .skipif(
-        conditions=[
-            any_is_empty_df,
-            any_dependency_skipped,
-        ],
-        unpack_depth=1,
-    )
-    .partial(
-        df=convert_to_user_timezone,
-        prefix="extra__",
-        duplicate_strategy="suffix",
-        **drop_extra_prefix_params,
-    )
-    .call()
-)
-
-
-# %% [markdown]
-# ## Filter Observation Relocations
-
-# %%
-# parameters
-
-filter_obs_params = dict(
-    bounding_box=...,
-    filter_point_coords=...,
-)
-
-# %%
-# call the task
-
-
-filter_obs = (
-    apply_reloc_coord_filter.set_task_instance_id("filter_obs")
-    .handle_errors()
-    .with_tracing()
-    .skipif(
-        conditions=[
-            any_is_empty_df,
-            any_dependency_skipped,
-        ],
-        unpack_depth=1,
-    )
-    .partial(
-        df=drop_extra_prefix,
-        roi_gdf=None,
-        roi_name=None,
-        reset_index=False,
-        **filter_obs_params,
-    )
-    .call()
-)
-
-
-# %% [markdown]
-# ## Trajectory Segment Filter
-
-# %%
-# parameters
-
-subject_traj_params = dict(
-    trajectory_segment_filter=...,
-)
-
-# %%
-# call the task
-
-
-subject_traj = (
-    relocations_to_trajectory.set_task_instance_id("subject_traj")
-    .handle_errors()
-    .with_tracing()
-    .skipif(
-        conditions=[
-            any_is_empty_df,
-            any_dependency_skipped,
-        ],
-        unpack_depth=1,
-    )
-    .partial(relocations=filter_obs, **subject_traj_params)
-    .call()
-)
-
-
-# %% [markdown]
-# ## Remove Column Prefix Extra
-
-# %%
-# parameters
-
-drop_extra_prefix_traj_params = dict()
-
-# %%
-# call the task
-
-
-drop_extra_prefix_traj = (
-    drop_column_prefix.set_task_instance_id("drop_extra_prefix_traj")
-    .handle_errors()
-    .with_tracing()
-    .skipif(
-        conditions=[
-            any_is_empty_df,
-            any_dependency_skipped,
-        ],
-        unpack_depth=1,
-    )
-    .partial(
-        df=subject_traj,
-        prefix="extra__",
-        duplicate_strategy="suffix",
-        **drop_extra_prefix_traj_params,
-    )
-    .call()
-)
-
-
-# %% [markdown]
-# ## Internally Process Columns
-
-# %%
-# parameters
-
-customize_columns_internally_params = dict()
-
-# %%
-# call the task
-
-
-customize_columns_internally = (
-    map_columns.set_task_instance_id("customize_columns_internally")
-    .handle_errors()
-    .with_tracing()
-    .skipif(
-        conditions=[
-            any_is_empty_df,
-            any_dependency_skipped,
-        ],
-        unpack_depth=1,
-    )
-    .partial(
-        df=drop_extra_prefix_traj,
-        rename_columns={},
-        drop_columns=["id"],
-        retain_columns=[],
-        **customize_columns_internally_params,
-    )
-    .call()
-)
-
-
-# %% [markdown]
-# ## Process Columns
-
-# %%
-# parameters
-
-customize_columns_params = dict(
-    drop_columns=...,
-    retain_columns=...,
-    rename_columns=...,
-)
-
-# %%
-# call the task
-
-
-customize_columns = (
-    map_columns.set_task_instance_id("customize_columns")
-    .handle_errors()
-    .with_tracing()
-    .skipif(
-        conditions=[
-            any_is_empty_df,
-            any_dependency_skipped,
-        ],
-        unpack_depth=1,
-    )
-    .partial(df=customize_columns_internally, **customize_columns_params)
-    .call()
-)
-
-
-# %% [markdown]
-# ## Apply SQL Query
-
-# %%
-# parameters
-
-sql_query_params = dict(
-    query=...,
-    columns=...,
-)
-
-# %%
-# call the task
-
-
-sql_query = (
-    apply_sql_query.set_task_instance_id("sql_query")
-    .handle_errors()
-    .with_tracing()
-    .skipif(
-        conditions=[
-            any_is_empty_df,
-            any_dependency_skipped,
-        ],
-        unpack_depth=1,
-    )
-    .partial(df=customize_columns, **sql_query_params)
-    .call()
-)
-
-
-# %% [markdown]
 # ## Group Data
 
 # %%
@@ -580,8 +317,8 @@ obs_add_temporal_index = (
         unpack_depth=1,
     )
     .partial(
-        df=sql_query,
-        time_col="segment_start",
+        df=subject_obs,
+        time_col="fixtime",
         groupers=groupers,
         cast_to_datetime=True,
         format="mixed",
@@ -592,19 +329,19 @@ obs_add_temporal_index = (
 
 
 # %% [markdown]
-# ## Split Trajectory by Group
+# ## Split Observations by Group
 
 # %%
 # parameters
 
-split_traj_groups_params = dict()
+split_obs_groups_params = dict()
 
 # %%
 # call the task
 
 
-split_traj_groups = (
-    split_groups.set_task_instance_id("split_traj_groups")
+split_obs_groups = (
+    split_groups.set_task_instance_id("split_obs_groups")
     .handle_errors()
     .with_tracing()
     .skipif(
@@ -614,8 +351,287 @@ split_traj_groups = (
         ],
         unpack_depth=1,
     )
-    .partial(df=obs_add_temporal_index, groupers=groupers, **split_traj_groups_params)
+    .partial(df=obs_add_temporal_index, groupers=groupers, **split_obs_groups_params)
     .call()
+)
+
+
+# %% [markdown]
+# ## Convert to timezone
+
+# %%
+# parameters
+
+convert_to_user_timezone_params = dict()
+
+# %%
+# call the task
+
+
+convert_to_user_timezone = (
+    convert_values_to_timezone.set_task_instance_id("convert_to_user_timezone")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(
+        timezone=get_timezone, columns=["fixtime"], **convert_to_user_timezone_params
+    )
+    .mapvalues(argnames=["df"], argvalues=split_obs_groups)
+)
+
+
+# %% [markdown]
+# ## Remove Column Prefix Extra
+
+# %%
+# parameters
+
+drop_extra_prefix_params = dict()
+
+# %%
+# call the task
+
+
+drop_extra_prefix = (
+    drop_column_prefix.set_task_instance_id("drop_extra_prefix")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(prefix="extra__", duplicate_strategy="suffix", **drop_extra_prefix_params)
+    .mapvalues(argnames=["df"], argvalues=convert_to_user_timezone)
+)
+
+
+# %% [markdown]
+# ## Filter Observation Relocations
+
+# %%
+# parameters
+
+filter_obs_params = dict(
+    bounding_box=...,
+    filter_point_coords=...,
+)
+
+# %%
+# call the task
+
+
+filter_obs = (
+    apply_reloc_coord_filter.set_task_instance_id("filter_obs")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(roi_gdf=None, roi_name=None, reset_index=False, **filter_obs_params)
+    .mapvalues(argnames=["df"], argvalues=drop_extra_prefix)
+)
+
+
+# %% [markdown]
+# ## Trajectory Segment Filter
+
+# %%
+# parameters
+
+subject_traj_params = dict(
+    trajectory_segment_filter=...,
+)
+
+# %%
+# call the task
+
+
+subject_traj = (
+    relocations_to_trajectory.set_task_instance_id("subject_traj")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(**subject_traj_params)
+    .mapvalues(argnames=["relocations"], argvalues=filter_obs)
+)
+
+
+# %% [markdown]
+# ## Remove Column Prefix Extra
+
+# %%
+# parameters
+
+drop_extra_prefix_traj_params = dict()
+
+# %%
+# call the task
+
+
+drop_extra_prefix_traj = (
+    drop_column_prefix.set_task_instance_id("drop_extra_prefix_traj")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(
+        prefix="extra__", duplicate_strategy="suffix", **drop_extra_prefix_traj_params
+    )
+    .mapvalues(argnames=["df"], argvalues=subject_traj)
+)
+
+
+# %% [markdown]
+# ## Internally Process Columns
+
+# %%
+# parameters
+
+customize_columns_internally_params = dict()
+
+# %%
+# call the task
+
+
+customize_columns_internally = (
+    map_columns.set_task_instance_id("customize_columns_internally")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(
+        rename_columns={},
+        drop_columns=["id"],
+        retain_columns=[],
+        **customize_columns_internally_params,
+    )
+    .mapvalues(argnames=["df"], argvalues=drop_extra_prefix_traj)
+)
+
+
+# %% [markdown]
+# ## Process Columns
+
+# %%
+# parameters
+
+customize_columns_params = dict(
+    drop_columns=...,
+    retain_columns=...,
+    rename_columns=...,
+)
+
+# %%
+# call the task
+
+
+customize_columns = (
+    map_columns.set_task_instance_id("customize_columns")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(**customize_columns_params)
+    .mapvalues(argnames=["df"], argvalues=customize_columns_internally)
+)
+
+
+# %% [markdown]
+# ## Apply SQL Query
+
+# %%
+# parameters
+
+sql_query_params = dict(
+    query=...,
+    columns=...,
+)
+
+# %%
+# call the task
+
+
+sql_query = (
+    apply_sql_query.set_task_instance_id("sql_query")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(**sql_query_params)
+    .mapvalues(argnames=["df"], argvalues=customize_columns)
+)
+
+
+# %% [markdown]
+# ## Add temporal index to trajectories
+
+# %%
+# parameters
+
+traj_add_temporal_index_params = dict()
+
+# %%
+# call the task
+
+
+traj_add_temporal_index = (
+    add_temporal_index.set_task_instance_id("traj_add_temporal_index")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(
+        time_col="segment_start",
+        groupers=groupers,
+        cast_to_datetime=True,
+        format="mixed",
+        **traj_add_temporal_index_params,
+    )
+    .mapvalues(argnames=["df"], argvalues=sql_query)
 )
 
 
@@ -650,7 +666,7 @@ persist_tracks = (
         sanitize=True,
         **persist_tracks_params,
     )
-    .mapvalues(argnames=["df"], argvalues=split_traj_groups)
+    .mapvalues(argnames=["df"], argvalues=traj_add_temporal_index)
 )
 
 
@@ -680,7 +696,7 @@ skip_map_generation = (
         unpack_depth=1,
     )
     .partial(**skip_map_generation_params)
-    .mapvalues(argnames=["df"], argvalues=split_traj_groups)
+    .mapvalues(argnames=["df"], argvalues=traj_add_temporal_index)
 )
 
 

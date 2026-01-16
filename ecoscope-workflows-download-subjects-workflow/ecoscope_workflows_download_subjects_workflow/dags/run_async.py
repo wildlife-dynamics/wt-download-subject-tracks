@@ -81,7 +81,10 @@ def main(params: Params):
         "er_client_name": [],
         "subject_obs": ["er_client_name", "time_range"],
         "warn_if_mixed_subtype": ["subject_obs"],
-        "convert_to_user_timezone": ["subject_obs", "get_timezone"],
+        "groupers": [],
+        "obs_add_temporal_index": ["subject_obs", "groupers"],
+        "split_obs_groups": ["obs_add_temporal_index", "groupers"],
+        "convert_to_user_timezone": ["get_timezone", "split_obs_groups"],
         "drop_extra_prefix": ["convert_to_user_timezone"],
         "filter_obs": ["drop_extra_prefix"],
         "subject_traj": ["filter_obs"],
@@ -89,11 +92,9 @@ def main(params: Params):
         "customize_columns_internally": ["drop_extra_prefix_traj"],
         "customize_columns": ["customize_columns_internally"],
         "sql_query": ["customize_columns"],
-        "groupers": [],
-        "obs_add_temporal_index": ["sql_query", "groupers"],
-        "split_traj_groups": ["obs_add_temporal_index", "groupers"],
-        "persist_tracks": ["split_traj_groups"],
-        "skip_map_generation": ["split_traj_groups"],
+        "traj_add_temporal_index": ["groupers", "sql_query"],
+        "persist_tracks": ["traj_add_temporal_index"],
+        "skip_map_generation": ["traj_add_temporal_index"],
         "set_traj_map_title": [],
         "base_map_defs": [],
         "colormap_traj": ["skip_map_generation"],
@@ -222,172 +223,6 @@ def main(params: Params):
             | (params_dict.get("warn_if_mixed_subtype") or {}),
             method="call",
         ),
-        "convert_to_user_timezone": Node(
-            async_task=convert_values_to_timezone.validate()
-            .set_task_instance_id("convert_to_user_timezone")
-            .handle_errors()
-            .with_tracing()
-            .skipif(
-                conditions=[
-                    any_is_empty_df,
-                    any_dependency_skipped,
-                ],
-                unpack_depth=1,
-            )
-            .set_executor("lithops"),
-            partial={
-                "df": DependsOn("subject_obs"),
-                "timezone": DependsOn("get_timezone"),
-                "columns": [
-                    "fixtime",
-                ],
-            }
-            | (params_dict.get("convert_to_user_timezone") or {}),
-            method="call",
-        ),
-        "drop_extra_prefix": Node(
-            async_task=drop_column_prefix.validate()
-            .set_task_instance_id("drop_extra_prefix")
-            .handle_errors()
-            .with_tracing()
-            .skipif(
-                conditions=[
-                    any_is_empty_df,
-                    any_dependency_skipped,
-                ],
-                unpack_depth=1,
-            )
-            .set_executor("lithops"),
-            partial={
-                "df": DependsOn("convert_to_user_timezone"),
-                "prefix": "extra__",
-                "duplicate_strategy": "suffix",
-            }
-            | (params_dict.get("drop_extra_prefix") or {}),
-            method="call",
-        ),
-        "filter_obs": Node(
-            async_task=apply_reloc_coord_filter.validate()
-            .set_task_instance_id("filter_obs")
-            .handle_errors()
-            .with_tracing()
-            .skipif(
-                conditions=[
-                    any_is_empty_df,
-                    any_dependency_skipped,
-                ],
-                unpack_depth=1,
-            )
-            .set_executor("lithops"),
-            partial={
-                "df": DependsOn("drop_extra_prefix"),
-                "roi_gdf": None,
-                "roi_name": None,
-                "reset_index": False,
-            }
-            | (params_dict.get("filter_obs") or {}),
-            method="call",
-        ),
-        "subject_traj": Node(
-            async_task=relocations_to_trajectory.validate()
-            .set_task_instance_id("subject_traj")
-            .handle_errors()
-            .with_tracing()
-            .skipif(
-                conditions=[
-                    any_is_empty_df,
-                    any_dependency_skipped,
-                ],
-                unpack_depth=1,
-            )
-            .set_executor("lithops"),
-            partial={
-                "relocations": DependsOn("filter_obs"),
-            }
-            | (params_dict.get("subject_traj") or {}),
-            method="call",
-        ),
-        "drop_extra_prefix_traj": Node(
-            async_task=drop_column_prefix.validate()
-            .set_task_instance_id("drop_extra_prefix_traj")
-            .handle_errors()
-            .with_tracing()
-            .skipif(
-                conditions=[
-                    any_is_empty_df,
-                    any_dependency_skipped,
-                ],
-                unpack_depth=1,
-            )
-            .set_executor("lithops"),
-            partial={
-                "df": DependsOn("subject_traj"),
-                "prefix": "extra__",
-                "duplicate_strategy": "suffix",
-            }
-            | (params_dict.get("drop_extra_prefix_traj") or {}),
-            method="call",
-        ),
-        "customize_columns_internally": Node(
-            async_task=map_columns.validate()
-            .set_task_instance_id("customize_columns_internally")
-            .handle_errors()
-            .with_tracing()
-            .skipif(
-                conditions=[
-                    any_is_empty_df,
-                    any_dependency_skipped,
-                ],
-                unpack_depth=1,
-            )
-            .set_executor("lithops"),
-            partial={
-                "df": DependsOn("drop_extra_prefix_traj"),
-                "drop_columns": [
-                    "id",
-                ],
-            }
-            | (params_dict.get("customize_columns_internally") or {}),
-            method="call",
-        ),
-        "customize_columns": Node(
-            async_task=map_columns.validate()
-            .set_task_instance_id("customize_columns")
-            .handle_errors()
-            .with_tracing()
-            .skipif(
-                conditions=[
-                    any_is_empty_df,
-                    any_dependency_skipped,
-                ],
-                unpack_depth=1,
-            )
-            .set_executor("lithops"),
-            partial={
-                "df": DependsOn("customize_columns_internally"),
-            }
-            | (params_dict.get("customize_columns") or {}),
-            method="call",
-        ),
-        "sql_query": Node(
-            async_task=apply_sql_query.validate()
-            .set_task_instance_id("sql_query")
-            .handle_errors()
-            .with_tracing()
-            .skipif(
-                conditions=[
-                    any_is_empty_df,
-                    any_dependency_skipped,
-                ],
-                unpack_depth=1,
-            )
-            .set_executor("lithops"),
-            partial={
-                "df": DependsOn("customize_columns"),
-            }
-            | (params_dict.get("sql_query") or {}),
-            method="call",
-        ),
         "groupers": Node(
             async_task=set_groupers.validate()
             .set_task_instance_id("groupers")
@@ -418,8 +253,8 @@ def main(params: Params):
             )
             .set_executor("lithops"),
             partial={
-                "df": DependsOn("sql_query"),
-                "time_col": "segment_start",
+                "df": DependsOn("subject_obs"),
+                "time_col": "fixtime",
                 "groupers": DependsOn("groupers"),
                 "cast_to_datetime": True,
                 "format": "mixed",
@@ -427,9 +262,9 @@ def main(params: Params):
             | (params_dict.get("obs_add_temporal_index") or {}),
             method="call",
         ),
-        "split_traj_groups": Node(
+        "split_obs_groups": Node(
             async_task=split_groups.validate()
-            .set_task_instance_id("split_traj_groups")
+            .set_task_instance_id("split_obs_groups")
             .handle_errors()
             .with_tracing()
             .skipif(
@@ -444,8 +279,218 @@ def main(params: Params):
                 "df": DependsOn("obs_add_temporal_index"),
                 "groupers": DependsOn("groupers"),
             }
-            | (params_dict.get("split_traj_groups") or {}),
+            | (params_dict.get("split_obs_groups") or {}),
             method="call",
+        ),
+        "convert_to_user_timezone": Node(
+            async_task=convert_values_to_timezone.validate()
+            .set_task_instance_id("convert_to_user_timezone")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial={
+                "timezone": DependsOn("get_timezone"),
+                "columns": [
+                    "fixtime",
+                ],
+            }
+            | (params_dict.get("convert_to_user_timezone") or {}),
+            method="mapvalues",
+            kwargs={
+                "argnames": ["df"],
+                "argvalues": DependsOn("split_obs_groups"),
+            },
+        ),
+        "drop_extra_prefix": Node(
+            async_task=drop_column_prefix.validate()
+            .set_task_instance_id("drop_extra_prefix")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial={
+                "prefix": "extra__",
+                "duplicate_strategy": "suffix",
+            }
+            | (params_dict.get("drop_extra_prefix") or {}),
+            method="mapvalues",
+            kwargs={
+                "argnames": ["df"],
+                "argvalues": DependsOn("convert_to_user_timezone"),
+            },
+        ),
+        "filter_obs": Node(
+            async_task=apply_reloc_coord_filter.validate()
+            .set_task_instance_id("filter_obs")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial={
+                "roi_gdf": None,
+                "roi_name": None,
+                "reset_index": False,
+            }
+            | (params_dict.get("filter_obs") or {}),
+            method="mapvalues",
+            kwargs={
+                "argnames": ["df"],
+                "argvalues": DependsOn("drop_extra_prefix"),
+            },
+        ),
+        "subject_traj": Node(
+            async_task=relocations_to_trajectory.validate()
+            .set_task_instance_id("subject_traj")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial=(params_dict.get("subject_traj") or {}),
+            method="mapvalues",
+            kwargs={
+                "argnames": ["relocations"],
+                "argvalues": DependsOn("filter_obs"),
+            },
+        ),
+        "drop_extra_prefix_traj": Node(
+            async_task=drop_column_prefix.validate()
+            .set_task_instance_id("drop_extra_prefix_traj")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial={
+                "prefix": "extra__",
+                "duplicate_strategy": "suffix",
+            }
+            | (params_dict.get("drop_extra_prefix_traj") or {}),
+            method="mapvalues",
+            kwargs={
+                "argnames": ["df"],
+                "argvalues": DependsOn("subject_traj"),
+            },
+        ),
+        "customize_columns_internally": Node(
+            async_task=map_columns.validate()
+            .set_task_instance_id("customize_columns_internally")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial={
+                "drop_columns": [
+                    "id",
+                ],
+            }
+            | (params_dict.get("customize_columns_internally") or {}),
+            method="mapvalues",
+            kwargs={
+                "argnames": ["df"],
+                "argvalues": DependsOn("drop_extra_prefix_traj"),
+            },
+        ),
+        "customize_columns": Node(
+            async_task=map_columns.validate()
+            .set_task_instance_id("customize_columns")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial=(params_dict.get("customize_columns") or {}),
+            method="mapvalues",
+            kwargs={
+                "argnames": ["df"],
+                "argvalues": DependsOn("customize_columns_internally"),
+            },
+        ),
+        "sql_query": Node(
+            async_task=apply_sql_query.validate()
+            .set_task_instance_id("sql_query")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial=(params_dict.get("sql_query") or {}),
+            method="mapvalues",
+            kwargs={
+                "argnames": ["df"],
+                "argvalues": DependsOn("customize_columns"),
+            },
+        ),
+        "traj_add_temporal_index": Node(
+            async_task=add_temporal_index.validate()
+            .set_task_instance_id("traj_add_temporal_index")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial={
+                "time_col": "segment_start",
+                "groupers": DependsOn("groupers"),
+                "cast_to_datetime": True,
+                "format": "mixed",
+            }
+            | (params_dict.get("traj_add_temporal_index") or {}),
+            method="mapvalues",
+            kwargs={
+                "argnames": ["df"],
+                "argvalues": DependsOn("sql_query"),
+            },
         ),
         "persist_tracks": Node(
             async_task=persist_df_wrapper.validate()
@@ -467,7 +512,7 @@ def main(params: Params):
             method="mapvalues",
             kwargs={
                 "argnames": ["df"],
-                "argvalues": DependsOn("split_traj_groups"),
+                "argvalues": DependsOn("traj_add_temporal_index"),
             },
         ),
         "skip_map_generation": Node(
@@ -487,7 +532,7 @@ def main(params: Params):
             method="mapvalues",
             kwargs={
                 "argnames": ["df"],
-                "argvalues": DependsOn("split_traj_groups"),
+                "argvalues": DependsOn("traj_add_temporal_index"),
             },
         ),
         "set_traj_map_title": Node(
