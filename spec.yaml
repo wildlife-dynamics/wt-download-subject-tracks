@@ -195,14 +195,26 @@ workflow:
 
       - name: Apply Color to Trajectories By Subject
         id: colormap_traj
-        task: apply_color_map
+        task: assign_subject_colors
         partial:
-          input_column_name: "subject__name"
-          output_column_name: "subject__name_colormap"
-          colormap: "tab20b"
+          subject_id_column: "subject__id"
+          output_column: "subject_colormap"
+          default_palette: "tab20b"
         mapvalues:
           argnames: df
           argvalues: ${{ workflow.skip_map_generation.return }}
+
+      - name: Sort Subject Names
+        id: sort_subject_names
+        task: sort_values
+        partial:
+          column_name: "subject__name"
+          ascending: true
+          na_position: "last"
+        mapvalues:
+          argnames: df
+          argvalues: ${{ workflow.colormap_traj.return }}
+
       - name: Rename columns for map tooltip display
         id: rename_display_columns
         task: map_columns
@@ -217,7 +229,7 @@ workflow:
             subject__sex: "Subject Sex"
         mapvalues:
           argnames: df
-          argvalues: ${{ workflow.colormap_traj.return }}
+          argvalues: ${{ workflow.sort_subject_names.return }}
       - name: Create map layer for each trajectory group
         id: traj_map_layers
         task: create_polyline_layer
@@ -228,10 +240,10 @@ workflow:
             - all_geometry_are_none
         partial:
           layer_style:
-            color_column: "subject__name_colormap"
+            color_column: "subject_colormap"
           legend:
             label_column: "Subject Name"
-            color_column: "subject__name_colormap"
+            color_column: "subject_colormap"
           tooltip_columns: ["Start", "Duration (s)", "Speed (kph)", "Nighttime", "Subject Name", "Subject Sex"]
         mapvalues:
           argnames: geodataframe

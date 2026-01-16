@@ -43,6 +43,7 @@ from ecoscope_workflows_core.tasks.transformation import (
     convert_values_to_timezone as convert_values_to_timezone,
 )
 from ecoscope_workflows_core.tasks.transformation import map_columns as map_columns
+from ecoscope_workflows_core.tasks.transformation import sort_values as sort_values
 from ecoscope_workflows_ext_custom.tasks.io import (
     persist_df_wrapper as persist_df_wrapper,
 )
@@ -68,10 +69,10 @@ from ecoscope_workflows_ext_ecoscope.tasks.skip import (
     all_geometry_are_none as all_geometry_are_none,
 )
 from ecoscope_workflows_ext_ecoscope.tasks.transformation import (
-    apply_color_map as apply_color_map,
+    apply_reloc_coord_filter as apply_reloc_coord_filter,
 )
 from ecoscope_workflows_ext_ecoscope.tasks.transformation import (
-    apply_reloc_coord_filter as apply_reloc_coord_filter,
+    assign_subject_colors as assign_subject_colors,
 )
 from ecoscope_workflows_ext_ecoscope.tasks.warning import (
     mixed_subtype_warning as mixed_subtype_warning,
@@ -748,14 +749,16 @@ base_map_defs = (
 # %%
 # parameters
 
-colormap_traj_params = dict()
+colormap_traj_params = dict(
+    additional_column=...,
+)
 
 # %%
 # call the task
 
 
 colormap_traj = (
-    apply_color_map.set_task_instance_id("colormap_traj")
+    assign_subject_colors.set_task_instance_id("colormap_traj")
     .handle_errors()
     .with_tracing()
     .skipif(
@@ -766,12 +769,45 @@ colormap_traj = (
         unpack_depth=1,
     )
     .partial(
-        input_column_name="subject__name",
-        output_column_name="subject__name_colormap",
-        colormap="tab20b",
+        subject_id_column="subject__id",
+        output_column="subject_colormap",
+        default_palette="tab20b",
         **colormap_traj_params,
     )
     .mapvalues(argnames=["df"], argvalues=skip_map_generation)
+)
+
+
+# %% [markdown]
+# ## Sort Subject Names
+
+# %%
+# parameters
+
+sort_subject_names_params = dict()
+
+# %%
+# call the task
+
+
+sort_subject_names = (
+    sort_values.set_task_instance_id("sort_subject_names")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(
+        column_name="subject__name",
+        ascending=True,
+        na_position="last",
+        **sort_subject_names_params,
+    )
+    .mapvalues(argnames=["df"], argvalues=colormap_traj)
 )
 
 
@@ -810,7 +846,7 @@ rename_display_columns = (
         },
         **rename_display_columns_params,
     )
-    .mapvalues(argnames=["df"], argvalues=colormap_traj)
+    .mapvalues(argnames=["df"], argvalues=sort_subject_names)
 )
 
 
@@ -841,11 +877,8 @@ traj_map_layers = (
         unpack_depth=1,
     )
     .partial(
-        layer_style={"color_column": "subject__name_colormap"},
-        legend={
-            "label_column": "Subject Name",
-            "color_column": "subject__name_colormap",
-        },
+        layer_style={"color_column": "subject_colormap"},
+        legend={"label_column": "Subject Name", "color_column": "subject_colormap"},
         tooltip_columns=[
             "Start",
             "Duration (s)",
