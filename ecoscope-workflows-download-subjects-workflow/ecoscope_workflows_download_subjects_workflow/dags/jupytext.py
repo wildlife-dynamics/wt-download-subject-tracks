@@ -749,9 +749,7 @@ base_map_defs = (
 # %%
 # parameters
 
-colormap_traj_params = dict(
-    additional_column=...,
-)
+colormap_traj_params = dict()
 
 # %%
 # call the task
@@ -772,6 +770,7 @@ colormap_traj = (
         subject_id_column="subject__id",
         output_column="subject_colormap",
         default_palette="tab20b",
+        additional_column="subject__additional",
         **colormap_traj_params,
     )
     .mapvalues(argnames=["df"], argvalues=skip_map_generation)

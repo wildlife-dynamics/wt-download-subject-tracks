@@ -509,20 +509,6 @@
           "type": "object",
           "required": [],
           "title": " "
-        },
-        "colormap_traj": {
-          "additionalProperties": false,
-          "properties": {
-            "additional_column": {
-              "default": "subject__additional",
-              "title": "Additional Column",
-              "type": "string",
-              "description": "Column containing subject additional data as JSON (e.g., 'subject__additional')"
-            }
-          },
-          "required": [],
-          "type": "object",
-          "title": "Apply Color to Trajectories By Subject"
         }
       }
     }
@@ -803,8 +789,7 @@
     "Generate Maps": {
       "ui:order": [
         "skip_map_generation",
-        "base_map_defs",
-        "colormap_traj"
+        "base_map_defs"
       ]
     },
     "ui:order": [

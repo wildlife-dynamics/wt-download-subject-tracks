@@ -38,6 +38,9 @@ base:
           opacity: 0.5
           max_zoom: 17
           min_zoom: null
+    persist_tracks:
+      filetypes: ["geoparquet", "csv"]
+      filename_prefix: "subject_tracks"
 
 month-grouper:
   name: Base Test Case

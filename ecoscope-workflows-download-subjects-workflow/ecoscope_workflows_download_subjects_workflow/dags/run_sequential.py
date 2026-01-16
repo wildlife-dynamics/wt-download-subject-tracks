@@ -481,6 +481,7 @@ def main(params: Params):
             subject_id_column="subject__id",
             output_column="subject_colormap",
             default_palette="tab20b",
+            additional_column="subject__additional",
             **(params_dict.get("colormap_traj") or {}),
         )
         .mapvalues(argnames=["df"], argvalues=skip_map_generation)

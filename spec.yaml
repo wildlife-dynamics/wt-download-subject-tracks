@@ -200,6 +200,7 @@ workflow:
           subject_id_column: "subject__id"
           output_column: "subject_colormap"
           default_palette: "tab20b"
+          additional_column: "subject__additional"
         mapvalues:
           argnames: df
           argvalues: ${{ workflow.skip_map_generation.return }}

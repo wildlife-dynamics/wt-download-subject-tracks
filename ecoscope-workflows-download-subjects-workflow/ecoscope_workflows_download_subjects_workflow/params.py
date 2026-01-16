@@ -252,17 +252,6 @@ class BaseMapDefs(BaseModel):
     )
 
 
-class ColormapTraj(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
-    additional_column: Optional[str] = Field(
-        "subject__additional",
-        description="Column containing subject additional data as JSON (e.g., 'subject__additional')",
-        title="Additional Column",
-    )
-
-
 class TimezoneInfo(BaseModel):
     label: str = Field(..., title="Label")
     tzCode: str = Field(..., title="Tzcode")
@@ -432,6 +421,3 @@ class Params(BaseModel):
         None, title="Skip Map Generation"
     )
     base_map_defs: Optional[BaseMapDefs] = Field(None, title=" ")
-    colormap_traj: Optional[ColormapTraj] = Field(
-        None, title="Apply Color to Trajectories By Subject"
-    )
