@@ -89,6 +89,7 @@ def main(params: Params):
         "filter_obs": ["drop_extra_prefix"],
         "customize_columns_obs": ["filter_obs"],
         "sql_query_obs": ["customize_columns_obs"],
+        "persist_obs": ["sql_query_obs"],
         "subject_traj": ["sql_query_obs"],
         "drop_extra_prefix_traj": ["subject_traj"],
         "customize_columns_internally": ["drop_extra_prefix_traj"],
@@ -397,6 +398,29 @@ def main(params: Params):
             kwargs={
                 "argnames": ["df"],
                 "argvalues": DependsOn("customize_columns_obs"),
+            },
+        ),
+        "persist_obs": Node(
+            async_task=persist_df_wrapper.validate()
+            .set_task_instance_id("persist_obs")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    never,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial={
+                "root_path": os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+                "sanitize": True,
+            }
+            | (params_dict.get("persist_obs") or {}),
+            method="mapvalues",
+            kwargs={
+                "argnames": ["df"],
+                "argvalues": DependsOn("sql_query_obs"),
             },
         ),
         "subject_traj": Node(

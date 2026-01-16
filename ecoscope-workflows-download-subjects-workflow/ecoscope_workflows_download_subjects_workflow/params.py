@@ -55,6 +55,26 @@ class SqlQueryObs(BaseModel):
     )
 
 
+class Filetype(str, Enum):
+    csv = "csv"
+    gpkg = "gpkg"
+    geoparquet = "geoparquet"
+
+
+class PersistObs(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    filetypes: Optional[List[Filetype]] = Field(
+        ["csv"], description="The output format", title="Filetypes"
+    )
+    filename_prefix: Optional[str] = Field(
+        None,
+        description="            Optional filename prefix to persist text to within the `root_path`.\n            We will always add a suffix based on the dataframe content hash to avoid duplicates.\n            ",
+        title="Filename Prefix",
+    )
+
+
 class SqlQuery(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -69,12 +89,6 @@ class SqlQuery(BaseModel):
         description="Optional list of column names to include in the SQL query context. If specified, only these columns will be available in the 'df' table for querying. Use this to exclude columns with unsupported data types (list, dict) that cannot be stored in SQLite. If not specified, all columns are included.",
         title="Columns",
     )
-
-
-class Filetype(str, Enum):
-    csv = "csv"
-    gpkg = "gpkg"
-    geoparquet = "geoparquet"
 
 
 class PersistTracks(BaseModel):
@@ -349,7 +363,7 @@ class Groupers(BaseModel):
     )
     groupers: Optional[List[Union[ValueGrouper, TemporalGrouper]]] = Field(
         None,
-        description="            Specify how the data should be grouped to create the views for your dashboard.\n            This field is optional; if left blank, all the data will appear in a single view.\n            ",
+        description="            Specify how the data should be grouped to create the views for your dashboard or persisted data.\n            This field is optional; if left blank, all the data will appear in a single view.\n            ",
         title=" ",
     )
 
@@ -448,6 +462,9 @@ class Params(BaseModel):
         None, title="Process Columns"
     )
     sql_query_obs: Optional[SqlQueryObs] = Field(None, title="Apply SQL Query")
+    persist_obs: Optional[PersistObs] = Field(
+        None, title="Persist Observation Relocations"
+    )
     subject_traj: Optional[SubjectTraj] = Field(None, title="Trajectory Segment Filter")
     customize_columns: Optional[CustomizeColumns] = Field(None, title="Process Columns")
     sql_query: Optional[SqlQuery] = Field(None, title="Apply SQL Query")

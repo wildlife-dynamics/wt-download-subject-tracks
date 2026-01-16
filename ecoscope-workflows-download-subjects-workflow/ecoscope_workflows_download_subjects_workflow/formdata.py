@@ -59,6 +59,26 @@ class SqlQueryObs(BaseModel):
     )
 
 
+class Filetype(str, Enum):
+    csv = "csv"
+    gpkg = "gpkg"
+    geoparquet = "geoparquet"
+
+
+class PersistObs(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    filetypes: Optional[List[Filetype]] = Field(
+        ["csv"], description="The output format", title="Filetypes"
+    )
+    filename_prefix: Optional[str] = Field(
+        "subject_observations",
+        description="            Optional filename prefix to persist text to within the `root_path`.\n            We will always add a suffix based on the dataframe content hash to avoid duplicates.\n            ",
+        title="Filename Prefix",
+    )
+
+
 class SqlQuery(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -73,12 +93,6 @@ class SqlQuery(BaseModel):
         description="Optional list of column names to include in the SQL query context. If specified, only these columns will be available in the 'df' table for querying. Use this to exclude columns with unsupported data types (list, dict) that cannot be stored in SQLite. If not specified, all columns are included.",
         title="Columns",
     )
-
-
-class Filetype(str, Enum):
-    csv = "csv"
-    gpkg = "gpkg"
-    geoparquet = "geoparquet"
 
 
 class PersistTracks(BaseModel):
@@ -360,7 +374,7 @@ class Groupers(BaseModel):
     )
     groupers: Optional[List[Union[ValueGrouper, TemporalGrouper]]] = Field(
         None,
-        description="            Specify how the data should be grouped to create the views for your dashboard.\n            This field is optional; if left blank, all the data will appear in a single view.\n            ",
+        description="            Specify how the data should be grouped to create the views for your dashboard or persisted data.\n            This field is optional; if left blank, all the data will appear in a single view.\n            ",
         title=" ",
     )
 
@@ -481,12 +495,15 @@ class FormData(BaseModel):
     Process_Observation_Relocations: Optional[ProcessObservationRelocations] = Field(
         None,
         alias="Process Observation Relocations",
-        description="Process each group of observations by applying timezone conversion, filters, coordinate filters, column mappings, and SQL queries.",
+        description="Process each group of observations by applying coordinate filters, column mappings, and SQL queries.",
+    )
+    persist_obs: Optional[PersistObs] = Field(
+        None, title="Persist Observation Relocations"
     )
     Transform_to_Trajectories: Optional[TransformToTrajectories] = Field(
         None,
         alias="Transform to Trajectories",
-        description="Convert filtered observations to trajectories and apply custom processing, SQL queries, and column mappings.",
+        description="Convert filtered observations to trajectories and apply segment processing, SQL queries, and column mappings.",
     )
     persist_tracks: Optional[PersistTracks] = Field(
         None, title="Persist Subject Trajectories"
