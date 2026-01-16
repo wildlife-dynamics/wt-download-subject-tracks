@@ -274,14 +274,6 @@ class EarthRangerConnection(BaseModel):
     name: str = Field(..., title="Data Source")
 
 
-class TemporalGrouper(RootModel[str]):
-    root: str = Field(..., title="Time")
-
-
-class ValueGrouper(RootModel[str]):
-    root: str = Field(..., title="Category")
-
-
 class BoundingBox(BaseModel):
     min_y: Optional[float] = Field(-90.0, title="Min Latitude")
     max_y: Optional[float] = Field(90.0, title="Max Latitude")
@@ -320,6 +312,14 @@ class RenameColumn(BaseModel):
     new_name: str = Field(..., title="New Name")
 
 
+class TemporalGrouper(RootModel[str]):
+    root: str = Field(..., title="Time")
+
+
+class ValueGrouper(RootModel[str]):
+    root: str = Field(..., title="Category")
+
+
 class TimeRange(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -338,21 +338,6 @@ class ErClientName(BaseModel):
     )
 
 
-class Groupers(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
-    groupers: Optional[List[Union[ValueGrouper, TemporalGrouper]]] = Field(
-        None,
-        description="            Specify how the data should be grouped to create the views for your dashboard.\n            This field is optional; if left blank, all the data will appear in a single view.\n            ",
-        title=" ",
-    )
-
-
-class GroupAndSplitData(BaseModel):
-    groupers: Optional[Groupers] = Field(None, title="Group Data")
-
-
 class FilterObs(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -368,12 +353,6 @@ class FilterObs(BaseModel):
         [],
         description="By adding a filter, the workflow will not include events recorded at the specified coordinates.",
         title="Filter Exact Point Coordinates",
-    )
-
-
-class ProcessObservationRelocations(BaseModel):
-    filter_obs: Optional[FilterObs] = Field(
-        None, title="Filter Observation Relocations"
     )
 
 
@@ -414,10 +393,25 @@ class CustomizeColumns(BaseModel):
     )
 
 
-class TransformToTrajectories(BaseModel):
+class Groupers(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    groupers: Optional[List[Union[ValueGrouper, TemporalGrouper]]] = Field(
+        None,
+        description="            Specify how the data should be grouped to create the views for your dashboard.\n            This field is optional; if left blank, all the data will appear in a single view.\n            ",
+        title=" ",
+    )
+
+
+class ProcessObservations(BaseModel):
+    filter_obs: Optional[FilterObs] = Field(
+        None, title="Filter Observation Relocations"
+    )
     subject_traj: Optional[SubjectTraj] = Field(None, title="Trajectory Segment Filter")
     customize_columns: Optional[CustomizeColumns] = Field(None, title="Process Columns")
     sql_query: Optional[SqlQuery] = Field(None, title="Apply SQL Query")
+    groupers: Optional[Groupers] = Field(None, title="Group Data")
 
 
 class FormData(BaseModel):
@@ -436,20 +430,10 @@ class FormData(BaseModel):
     Subject_Group: Optional[SubjectGroup] = Field(
         None, alias="Subject Group", description="Choose a subject group to analyze"
     )
-    Group_and_Split_Data: Optional[GroupAndSplitData] = Field(
+    Process_Observations: Optional[ProcessObservations] = Field(
         None,
-        alias="Group and Split Data",
-        description="Configure grouping options and split the observations into groups for parallel processing.",
-    )
-    Process_Observation_Relocations: Optional[ProcessObservationRelocations] = Field(
-        None,
-        alias="Process Observation Relocations",
-        description="Process each group of observations by applying timezone conversion, filters, and coordinate filters.",
-    )
-    Transform_to_Trajectories: Optional[TransformToTrajectories] = Field(
-        None,
-        alias="Transform to Trajectories",
-        description="Convert filtered observations to trajectories and apply custom processing, SQL queries, and column mappings.",
+        alias="Process Observations",
+        description="Process observations by applying filters, SQL queries, etc. Note that the data here includes all the columns from the previous steps and the normalized subject/observation details.",
     )
     persist_tracks: Optional[PersistTracks] = Field(
         None, title="Persist Subject Trajectories"
