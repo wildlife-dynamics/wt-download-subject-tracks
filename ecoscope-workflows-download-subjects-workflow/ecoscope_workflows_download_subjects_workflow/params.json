@@ -113,7 +113,7 @@
             "max_x": 180.0
           },
           "title": "Bounding Box",
-          "description": "Filter events to inside these bounding coordinates.",
+          "description": "Filter coordinates to be inside these bounding coordinates.",
           "ecoscope:advanced": true
         },
         "filter_point_coords": {

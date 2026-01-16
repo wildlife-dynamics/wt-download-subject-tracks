@@ -17,6 +17,13 @@ rjsf-overrides:
     Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
     persist_tracks.properties.filename_prefix.default: "subject_tracks"
   
+  $defs:
+    ValueGrouper: {
+      description: "Use a categorical column to group data by. If you're unsure which columns are available, run the workflow once without grouping to see the data, then configure grouping in a subsequent run.",
+      title: "Category",
+      "type": "string"
+    }
+
   uiSchema:
     Process Observations.filter_obs.filter_point_coords.items.ui:options.label: false
     Process Observations.customize_columns.rename_columns.items.ui:options.label: false

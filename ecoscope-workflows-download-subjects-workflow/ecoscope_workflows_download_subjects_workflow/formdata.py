@@ -317,7 +317,11 @@ class TemporalGrouper(RootModel[str]):
 
 
 class ValueGrouper(RootModel[str]):
-    root: str = Field(..., title="Category")
+    root: str = Field(
+        ...,
+        description="Use a categorical column to group data by. If you're unsure which columns are available, run the workflow once without grouping to see the data, then configure grouping in a subsequent run.",
+        title="Category",
+    )
 
 
 class TimeRange(BaseModel):
@@ -346,7 +350,7 @@ class FilterObs(BaseModel):
         default_factory=lambda: BoundingBox.model_validate(
             {"min_y": -90.0, "max_y": 90.0, "min_x": -180.0, "max_x": 180.0}
         ),
-        description="Filter events to inside these bounding coordinates.",
+        description="Filter coordinates to be inside these bounding coordinates.",
         title="Bounding Box",
     )
     filter_point_coords: Optional[List[Coordinate]] = Field(
