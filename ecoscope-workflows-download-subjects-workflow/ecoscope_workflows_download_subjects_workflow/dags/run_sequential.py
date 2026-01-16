@@ -297,6 +297,38 @@ def main(params: Params):
         .mapvalues(argnames=["df"], argvalues=drop_extra_prefix)
     )
 
+    customize_columns_obs = (
+        map_columns.validate()
+        .set_task_instance_id("customize_columns_obs")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params_dict.get("customize_columns_obs") or {}))
+        .mapvalues(argnames=["df"], argvalues=filter_obs)
+    )
+
+    sql_query_obs = (
+        apply_sql_query.validate()
+        .set_task_instance_id("sql_query_obs")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params_dict.get("sql_query_obs") or {}))
+        .mapvalues(argnames=["df"], argvalues=customize_columns_obs)
+    )
+
     subject_traj = (
         relocations_to_trajectory.validate()
         .set_task_instance_id("subject_traj")
@@ -310,7 +342,7 @@ def main(params: Params):
             unpack_depth=1,
         )
         .partial(**(params_dict.get("subject_traj") or {}))
-        .mapvalues(argnames=["relocations"], argvalues=filter_obs)
+        .mapvalues(argnames=["relocations"], argvalues=sql_query_obs)
     )
 
     drop_extra_prefix_traj = (

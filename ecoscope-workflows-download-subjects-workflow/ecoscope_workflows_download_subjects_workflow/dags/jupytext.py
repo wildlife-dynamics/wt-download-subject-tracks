@@ -446,6 +446,69 @@ filter_obs = (
 
 
 # %% [markdown]
+# ## Process Columns
+
+# %%
+# parameters
+
+customize_columns_obs_params = dict(
+    drop_columns=...,
+    retain_columns=...,
+    rename_columns=...,
+)
+
+# %%
+# call the task
+
+
+customize_columns_obs = (
+    map_columns.set_task_instance_id("customize_columns_obs")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(**customize_columns_obs_params)
+    .mapvalues(argnames=["df"], argvalues=filter_obs)
+)
+
+
+# %% [markdown]
+# ## Apply SQL Query
+
+# %%
+# parameters
+
+sql_query_obs_params = dict(
+    query=...,
+    columns=...,
+)
+
+# %%
+# call the task
+
+
+sql_query_obs = (
+    apply_sql_query.set_task_instance_id("sql_query_obs")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(**sql_query_obs_params)
+    .mapvalues(argnames=["df"], argvalues=customize_columns_obs)
+)
+
+
+# %% [markdown]
 # ## Trajectory Segment Filter
 
 # %%
@@ -471,7 +534,7 @@ subject_traj = (
         unpack_depth=1,
     )
     .partial(**subject_traj_params)
-    .mapvalues(argnames=["relocations"], argvalues=filter_obs)
+    .mapvalues(argnames=["relocations"], argvalues=sql_query_obs)
 )
 
 
