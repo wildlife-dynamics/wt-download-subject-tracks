@@ -101,9 +101,7 @@ def main(params: Params):
         "convert_to_user_timezone": ["get_timezone", "split_obs_groups"],
         "drop_extra_prefix": ["convert_to_user_timezone"],
         "filter_obs": ["drop_extra_prefix"],
-        "customize_columns_obs": ["filter_obs"],
-        "sql_query_obs": ["customize_columns_obs"],
-        "subject_traj": ["sql_query_obs"],
+        "subject_traj": ["filter_obs"],
         "drop_extra_prefix_traj": ["subject_traj"],
         "customize_columns_internally": ["drop_extra_prefix_traj"],
         "customize_columns": ["customize_columns_internally"],
@@ -373,46 +371,6 @@ def main(params: Params):
                 "argvalues": DependsOn("drop_extra_prefix"),
             },
         ),
-        "customize_columns_obs": Node(
-            async_task=map_columns.validate()
-            .set_task_instance_id("customize_columns_obs")
-            .handle_errors()
-            .with_tracing()
-            .skipif(
-                conditions=[
-                    any_is_empty_df,
-                    any_dependency_skipped,
-                ],
-                unpack_depth=1,
-            )
-            .set_executor("lithops"),
-            partial=(params_dict.get("customize_columns_obs") or {}),
-            method="mapvalues",
-            kwargs={
-                "argnames": ["df"],
-                "argvalues": DependsOn("filter_obs"),
-            },
-        ),
-        "sql_query_obs": Node(
-            async_task=apply_sql_query.validate()
-            .set_task_instance_id("sql_query_obs")
-            .handle_errors()
-            .with_tracing()
-            .skipif(
-                conditions=[
-                    any_is_empty_df,
-                    any_dependency_skipped,
-                ],
-                unpack_depth=1,
-            )
-            .set_executor("lithops"),
-            partial=(params_dict.get("sql_query_obs") or {}),
-            method="mapvalues",
-            kwargs={
-                "argnames": ["df"],
-                "argvalues": DependsOn("customize_columns_obs"),
-            },
-        ),
         "subject_traj": Node(
             async_task=relocations_to_trajectory.validate()
             .set_task_instance_id("subject_traj")
@@ -430,7 +388,7 @@ def main(params: Params):
             method="mapvalues",
             kwargs={
                 "argnames": ["relocations"],
-                "argvalues": DependsOn("sql_query_obs"),
+                "argvalues": DependsOn("filter_obs"),
             },
         ),
         "drop_extra_prefix_traj": Node(

@@ -39,22 +39,6 @@ class SubjectObs(BaseModel):
     )
 
 
-class SqlQueryObs(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
-    query: Optional[str] = Field(
-        "",
-        description="SQL query string to apply to the DataFrame. Leaves it unchanged when the field is emptyUse 'df' as the table name in the query.",
-        title="Query",
-    )
-    columns: Optional[List[str]] = Field(
-        None,
-        description="Optional list of column names to include in the SQL query context. If specified, only these columns will be available in the 'df' table for querying. Use this to exclude columns with unsupported data types (list, dict) that cannot be stored in SQLite. If not specified, all columns are included.",
-        title="Columns",
-    )
-
-
 class SqlQuery(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -299,11 +283,6 @@ class Coordinate(BaseModel):
     x: float = Field(..., description="Example 37.30906", title="Longitude")
 
 
-class RenameColumn(BaseModel):
-    original_name: str = Field(..., title="Original Name")
-    new_name: str = Field(..., title="New Name")
-
-
 class TrajectorySegmentFilter(BaseModel):
     min_length_meters: Optional[confloat(ge=0.001)] = Field(
         0.001, title="Minimum Segment Length (Meters)"
@@ -323,6 +302,11 @@ class TrajectorySegmentFilter(BaseModel):
     max_speed_kmhr: Optional[confloat(gt=0.001)] = Field(
         500, title="Maximum Segment Speed (Kilometers per Hour)"
     )
+
+
+class RenameColumn(BaseModel):
+    original_name: str = Field(..., title="Original Name")
+    new_name: str = Field(..., title="New Name")
 
 
 class TimeRange(BaseModel):
@@ -369,23 +353,6 @@ class FilterObs(BaseModel):
         [],
         description="By adding a filter, the workflow will not include events recorded at the specified coordinates.",
         title="Filter Exact Point Coordinates",
-    )
-
-
-class CustomizeColumnsObs(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
-    drop_columns: Optional[List[str]] = Field(
-        [], description="List of columns to drop.", title="Drop Columns"
-    )
-    retain_columns: Optional[List[str]] = Field(
-        [],
-        description="List of columns to retain with the order specified by the list.\n                        Keep all the columns if the list is empty.",
-        title="Retain Columns",
-    )
-    rename_columns: Optional[List[RenameColumn]] = Field(
-        {}, description="Dictionary of columns to rename.", title="Rename Columns"
     )
 
 
@@ -444,10 +411,6 @@ class Params(BaseModel):
     filter_obs: Optional[FilterObs] = Field(
         None, title="Filter Observation Relocations"
     )
-    customize_columns_obs: Optional[CustomizeColumnsObs] = Field(
-        None, title="Process Columns"
-    )
-    sql_query_obs: Optional[SqlQueryObs] = Field(None, title="Apply SQL Query")
     subject_traj: Optional[SubjectTraj] = Field(None, title="Trajectory Segment Filter")
     customize_columns: Optional[CustomizeColumns] = Field(None, title="Process Columns")
     sql_query: Optional[SqlQuery] = Field(None, title="Apply SQL Query")

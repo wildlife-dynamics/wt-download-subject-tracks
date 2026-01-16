@@ -18,7 +18,6 @@ rjsf-overrides:
   
   uiSchema:
     Process Observation Relocations.filter_obs.filter_point_coords.items.ui:options.label: false
-    Process Observation Relocations.customize_columns_obs.rename_columns.items.ui:options.label: false
     Transform to Trajectories.customize_columns.rename_columns.items.ui:options.label: false
     base_map_defs.base_maps.items.ui:options.label: false
 task-instance-defaults:
@@ -100,7 +99,7 @@ workflow:
   - title: Process Observation Relocations
     type: task-group
     description: >-
-      Process each group of observations by applying coordinate filters, column mappings, and SQL queries.
+      Process each group of observations by applying timezone conversion, filters, and coordinate filters.
     tasks:
       - name: "Convert to timezone"
         id: convert_to_user_timezone
@@ -133,31 +132,17 @@ workflow:
           argnames: df
           argvalues: ${{ workflow.drop_extra_prefix.return }}
 
-      - name: Process Columns
-        id: customize_columns_obs
-        task: map_columns
-        mapvalues:
-          argnames: df
-          argvalues: ${{ workflow.filter_obs.return }}
-
-      - name: Apply SQL Query
-        id: sql_query_obs
-        task: apply_sql_query
-        mapvalues:
-          argnames: df
-          argvalues: ${{ workflow.customize_columns_obs.return }}
-
   - title: Transform to Trajectories
     type: task-group
     description: >-
-      Convert filtered observations to trajectories and apply segment processing, SQL queries, and column mappings.
+      Convert filtered observations to trajectories and apply custom processing, SQL queries, and column mappings.
     tasks:
       - name: Trajectory Segment Filter
         id: subject_traj
         task: relocations_to_trajectory
         mapvalues:
           argnames: relocations
-          argvalues: ${{ workflow.sql_query_obs.return }}
+          argvalues: ${{ workflow.filter_obs.return }}
 
       - name: Remove Column Prefix Extra
         id: drop_extra_prefix_traj
