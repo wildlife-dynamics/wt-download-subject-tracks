@@ -1,29 +1,24 @@
-id: download_events
+id: download_subjects
 requirements:
   - name: ecoscope-workflows-core
-    version: ">=0.20.2, <0.21.0"
+    version: ">=0.20.5,<0.21"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-ecoscope
-    version: ">=0.20.2, <0.21.0"
+    version: ">=0.20.5,<0.21"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-custom
-    version: ">=0.0.13, <0.1.0"
+    version: ">=0.0.10, <0.1.0"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 rjsf-overrides:
   properties:
     Generate Maps.properties.skip_map_generation.properties.skip.description: >-
-      Skip generating maps for the events data. Recommended for large datasets to improve performance.
-    Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
-    Download Attachments.properties.skip_attachment_download.properties.skip.description: >-
-      Skip downloading all attachments associated with the events.
-    Download Attachments.properties.skip_attachment_download.properties.skip.default: true
-    persist_events.properties.filename_prefix.default: "events"
+      Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
+    persist_tracks.properties.filename_prefix.default: "subject_tracks"
   
   uiSchema:
-    Download Attachments.download_attachments.ui:options.label: false
-    Download Attachments.download_attachments.attachments_subdir.items.ui:options.label: false
-    Process Events.filter_events.filter_point_coords.items.ui:options.label: false
-    Process Events.customize_columns.rename_columns.items.ui:options.label: false
+    Process Observations.filter_obs.filter_point_coords.items.ui:options.label: false
+    Process Observations.customize_columns.rename_columns.items.ui:options.label: false
+    base_map_defs.base_maps.items.ui:options.label: false
 task-instance-defaults:
   skipif:
     conditions:
@@ -51,102 +46,87 @@ workflow:
     id: er_client_name
     task: set_er_connection
 
-  - name: Get Event Data
-    id: get_event_data
-    task: get_events
-    partial:
-      client: ${{ workflow.er_client_name.return }}
-      time_range: ${{ workflow.time_range.return }}
-      raise_on_empty: false
-      include_details: true
-      include_updates: false
-      include_related_events: false
-      include_null_geometry: true
-      include_display_values: true
-  - title: Download Attachments
+  # subject group observations
+  - title: Subject Group
     type: task-group
     description: >-
-      Download attachments associated with the events.
+      Choose a subject group to analyze
     tasks:
-      - name: Skip Attachment Download
-        id: skip_attachment_download
-        task: maybe_skip_df
-        partial:
-          df: ${{ workflow.get_event_data.return }}
-
-      - name: Download Attachments
-        id: download_attachments
-        task: download_event_attachments
+      - name: "" # Get Subject Group Observations from EarthRanger
+        id: subject_obs
+        task: get_subjectgroup_observations
         partial:
           client: ${{ workflow.er_client_name.return }}
-          output_dir: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
-          use_index_as_id: false
-          event_gdf: ${{ workflow.skip_attachment_download.return }}
-          skip_download: false
+          time_range: ${{ workflow.time_range.return }}
+          raise_on_empty: false
 
-  - title: Process Events
+  - name: Warn if mixed subtype
+    id: warn_if_mixed_subtype
+    task: mixed_subtype_warning
+    skipif:
+      conditions:
+        - never
+    partial:
+      subject_obs: ${{ workflow.subject_obs.return }}
+
+  - title: Process Observations
     type: task-group
     description: >-
-      Process events by applying filters, SQL queries, etc. Note that the data here includes all the columns from the previous steps and the normalized event details.
+      Process observations by applying filters, SQL queries, etc. Note that the data here includes all the columns from the previous steps and the normalized subject/observation details.
     tasks:
-      # - name: Remove Column Prefix Event Details
-      #   id: drop_event_details_prefix
-      #   task: drop_column_prefix
-      #   partial:
-      #     df: ${{ workflow.normalize_event_details.return }}
-      #     prefix: "event_details__"
-
-      - name: Preprocess Columns
-        id: process_columns
-        task: map_columns
-        partial:
-          df: ${{ workflow.get_event_data.return }}
-          rename_columns:
-            time: event_time
-          drop_columns: []
-          retain_columns: []
-
       - name: "Convert to timezone"
         id: convert_to_user_timezone
         task: convert_values_to_timezone
         partial:
-          df: ${{ workflow.process_columns.return }}
+          df: ${{ workflow.subject_obs.return }}
           timezone: ${{ workflow.get_timezone.return }}
-          columns: ["time"]
+          columns: ["fixtime"]
 
-      - name: Extract reported_by_name from Events
-        id: extract_reported_by
-        task: extract_value_from_json_column
+      - name: Remove Column Prefix Extra
+        id: drop_extra_prefix
+        task: drop_column_prefix
         partial:
           df: ${{ workflow.convert_to_user_timezone.return }}
-          column_name: "reported_by"
-          field_name_options: ["name"]
-          output_type: "str"
-          output_column_name: "reported_by_name"
-          
-      - name: Normalize Event Details
-        id: normalize_event_details
-        task: normalize_json_column
-        partial:
-          df: ${{ workflow.extract_reported_by.return }}
-          column: "event_details"
-          skip_if_not_exists: true
-          sort_columns: true
+          prefix: "extra__"
+          duplicate_strategy: "suffix"
 
-      ## Custom Processing Steps ##
-      - name: Filter Event Relocations
-        id: filter_events
+      - name: Filter Observation Relocations
+        id: filter_obs
         task: apply_reloc_coord_filter
         partial:
-          df: ${{ workflow.normalize_event_details.return }}
+          df: ${{ workflow.drop_extra_prefix.return }}
           roi_gdf: null
           roi_name: null
+          reset_index: false
+
+      - name: Trajectory Segment Filter
+        id: subject_traj
+        task: relocations_to_trajectory
+        partial:
+          relocations: ${{ workflow.filter_obs.return }}
+
+      - name: Remove Column Prefix Extra
+        id: drop_extra_prefix_traj
+        task: drop_column_prefix
+        partial:
+          df: ${{ workflow.subject_traj.return }}
+          prefix: "extra__"
+          duplicate_strategy: "suffix"
+
+      - name: Internally Process Columns
+        id: customize_columns_internally
+        task: map_columns
+        partial:
+          df: ${{ workflow.drop_extra_prefix_traj.return }}
+          rename_columns: {}
+          drop_columns: ["id"] # drop 'id' to avoid conflict with `id` in the index
+          retain_columns: []
 
       - name: Process Columns
         id: customize_columns
         task: map_columns
         partial:
-          df: ${{ workflow.filter_events.return }}
+          df: ${{ workflow.customize_columns_internally.return }}
 
       - name: Apply SQL Query
         id: sql_query
@@ -158,32 +138,32 @@ workflow:
         id: groupers
         task: set_groupers
 
-      - name: Add temporal index to Events
-        id: events_add_temporal_index
+      - name: Add temporal index to observations
+        id: obs_add_temporal_index
         task: add_temporal_index
         partial:
           df: ${{ workflow.sql_query.return }}
-          time_col: "event_time"
+          time_col: "segment_start"
           groupers: ${{ workflow.groupers.return }}
           cast_to_datetime: true
           format: "mixed"
 
-      - name: Split Events by Group
-        id: split_event_groups
+      - name: Split Trajectory by Group
+        id: split_traj_groups
         task: split_groups
         partial:
-          df: ${{ workflow.events_add_temporal_index.return }}
+          df: ${{ workflow.obs_add_temporal_index.return }}
           groupers: ${{ workflow.groupers.return }}
 
-  - name: Persist Events
-    id: persist_events
+  - name: Persist Subject Trajectories
+    id: persist_tracks
     task: persist_df_wrapper
     partial:
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       sanitize: true
     mapvalues:
       argnames: df
-      argvalues: ${{ workflow.split_event_groups.return }}
+      argvalues: ${{ workflow.split_traj_groups.return }}
     skipif:
       conditions:
         - never
@@ -191,29 +171,36 @@ workflow:
   - title: Generate Maps
     type: task-group
     description: >-
-      Generate maps to visualize the events data.
+      Generate maps to visualize the subject trajectories.
     tasks:
-
       - name: Skip Map Generation
         id: skip_map_generation
         task: maybe_skip_df
         mapvalues:
           argnames: df
-          argvalues: ${{ workflow.split_event_groups.return }}
+          argvalues: ${{ workflow.split_traj_groups.return }}
 
-      - name: Events Colormap
-        id: events_colormap
+      # Widget Names
+      - name: "Set Trajectory Map Title"
+        id: set_traj_map_title
+        task: set_string_var
+        partial:
+          var: "Subject Group Trajectory Map"
+
+      - name: Map Base Layers
+        id: base_map_defs
+        task: set_base_maps
+
+      - name: Apply Color to Trajectories By Subject
+        id: colormap_traj
         task: apply_color_map
         partial:
-          input_column_name: "event_type"
+          input_column_name: "subject__name"
+          output_column_name: "subject__name_colormap"
           colormap: "tab20b"
-          output_column_name: "event_type_colormap"
         mapvalues:
           argnames: df
           argvalues: ${{ workflow.skip_map_generation.return }}
-      
-
-      # Rename columns for display
       - name: Rename columns for map tooltip display
         id: rename_display_columns
         task: map_columns
@@ -221,29 +208,17 @@ workflow:
           drop_columns: []
           retain_columns: []
           rename_columns:
-            serial_number: "Event Serial"
-            event_time: "Event Time"
-            event_type_display: "Event Type"
-            reported_by_name: "Reported By"
+            segment_start: "Start"
+            timespan_seconds: "Duration (s)"
+            speed_kmhr: "Speed (kph)"
+            subject__name: "Subject Name"
+            subject__sex: "Subject Sex"
         mapvalues:
           argnames: df
-          argvalues: ${{ workflow.events_colormap.return }}
-
-      - name: "Set Events Map Title"
-        id: set_events_map_title
-        task: set_string_var
-        partial:
-          var: "Events Map"
-
-      # Set base maps
-      - name: " "
-        id: base_map_defs
-        task: set_base_maps
-
-      # Grouped Events Map
-      - name: Create map layer from grouped Events
-        id: grouped_events_map_layer
-        task: create_point_layer
+          argvalues: ${{ workflow.colormap_traj.return }}
+      - name: Create map layer for each trajectory group
+        id: traj_map_layers
+        task: create_polyline_layer
         skipif:
           conditions:
             - any_is_empty_df
@@ -251,64 +226,66 @@ workflow:
             - all_geometry_are_none
         partial:
           layer_style:
-            fill_color_column: "event_type_colormap"
-            get_radius: 5
+            color_column: "subject__name_colormap"
           legend:
-            label_column: "Event Type"
-            color_column: "event_type_colormap"
-          tooltip_columns: ["Event Serial", "Event Time", "Event Type", "Reported By"]
+            label_column: "Subject Name"
+            color_column: "subject__name_colormap"
+          tooltip_columns: ["Start", "Duration (s)", "Speed (kph)", "Nighttime", "Subject Name", "Subject Sex"]
         mapvalues:
           argnames: geodataframe
           argvalues: ${{ workflow.rename_display_columns.return }}
-      - name: Draw Ecomap from grouped Events
-        id: grouped_events_ecomap
+      - name: Draw Ecomaps for each trajectory group
+        id: traj_ecomap
         task: draw_ecomap
         partial:
-          title: null
           tile_layers: ${{ workflow.base_map_defs.return }}
           north_arrow_style:
             placement: "top-left"
           legend_style:
-            title: "Event Type"
+            title: "Subject"
             format_title: false
             placement: "bottom-right"
           static: false
+          title: null
           max_zoom: 20
-          widget_id: ${{ workflow.set_events_map_title.return }}
+          widget_id: ${{ workflow.set_traj_map_title.return }}
         mapvalues:
           argnames: geo_layers
-          argvalues: ${{ workflow.grouped_events_map_layer.return }}
-      - name: Persist grouped Events Ecomap as Text
-        id: grouped_events_ecomap_html_url
+          argvalues: ${{ workflow.traj_map_layers.return }}
+      - name: Persist ecomap as Text
+        id: ecomap_html_urls
         task: persist_text
         partial:
           root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          filename_suffix: "v2"
         mapvalues:
           argnames: text
-          argvalues: ${{ workflow.grouped_events_ecomap.return }}
-      - name: Create grouped Events Map Widget
-        id: grouped_events_map_widget
+          argvalues: ${{ workflow.traj_ecomap.return }}
+      - name: Create Map Widgets for Trajectories
+        id: traj_map_widgets_single_views
         task: create_map_widget_single_view
         skipif:
           conditions:
             - never
         partial:
-          title: ${{ workflow.set_events_map_title.return }}
+          title: ${{ workflow.set_traj_map_title.return }}
         map:
           argnames: [view, data]
-          argvalues: ${{ workflow.grouped_events_ecomap_html_url.return }}
-      - name: Merge Events Map Widget Views
-        id: grouped_events_map_widget_merge
+          argvalues: ${{ workflow.ecomap_html_urls.return }}
+      - name: Merge EcoMap Widget Views
+        id: traj_grouped_map_widget
         task: merge_widget_views
         partial:
-          widgets: ${{ workflow.grouped_events_map_widget.return }}
+          widgets: ${{ workflow.traj_map_widgets_single_views.return }}
 
-  - name: Create Dashboard with Map Widgets
-    id: events_dashboard
+  # dashboard
+  - name: Create Dashboard with Subject Tracking Widgets
+    id: subject_tracking_dashboard
     task: gather_dashboard
     partial:
       details: ${{ workflow.workflow_details.return}}
       widgets:
-        - ${{ workflow.grouped_events_map_widget_merge.return }}
+        - ${{ workflow.traj_grouped_map_widget.return }}
       groupers: ${{ workflow.groupers.return }}
       time_range: ${{ workflow.time_range.return}}
+      warning: ${{ workflow.warn_if_mixed_subtype.return}}
