@@ -115,7 +115,7 @@
           },
           "title": " ",
           "type": "array",
-          "description": "            Specify how the data should be grouped to create the views for your dashboard or persisted data.\n            This field is optional; if left blank, all the data will appear in a single view.\n            "
+          "description": "            Specify how the data should be grouped to create the views for your dashboard.\n            This field is optional; if left blank, all the data will appear in a single view.\n            "
         }
       },
       "type": "object",
@@ -218,38 +218,6 @@
       "required": [],
       "type": "object",
       "title": "Apply SQL Query"
-    },
-    "persist_obs": {
-      "additionalProperties": false,
-      "properties": {
-        "filetypes": {
-          "default": [
-            "csv"
-          ],
-          "items": {
-            "enum": [
-              "csv",
-              "gpkg",
-              "geoparquet"
-            ],
-            "type": "string"
-          },
-          "title": "Filetypes",
-          "type": "array",
-          "description": "The output format",
-          "uniqueItems": true
-        },
-        "filename_prefix": {
-          "default": null,
-          "title": "Filename Prefix",
-          "type": "string",
-          "description": "            Optional filename prefix to persist text to within the `root_path`.\n            We will always add a suffix based on the dataframe content hash to avoid duplicates.\n            ",
-          "ecoscope:advanced": true
-        }
-      },
-      "required": [],
-      "type": "object",
-      "title": "Persist Observation Relocations"
     },
     "subject_traj": {
       "additionalProperties": false,
@@ -829,12 +797,6 @@
         "columns"
       ]
     },
-    "persist_obs": {
-      "ui:order": [
-        "filetypes",
-        "filename_prefix"
-      ]
-    },
     "customize_columns": {
       "ui:order": [
         "drop_columns",
@@ -863,7 +825,6 @@
       "filter_obs",
       "customize_columns_obs",
       "sql_query_obs",
-      "persist_obs",
       "subject_traj",
       "customize_columns",
       "sql_query",

@@ -127,7 +127,7 @@
               },
               "title": " ",
               "type": "array",
-              "description": "            Specify how the data should be grouped to create the views for your dashboard or persisted data.\n            This field is optional; if left blank, all the data will appear in a single view.\n            "
+              "description": "            Specify how the data should be grouped to create the views for your dashboard.\n            This field is optional; if left blank, all the data will appear in a single view.\n            "
             }
           },
           "type": "object",
@@ -138,7 +138,7 @@
     },
     "Process Observation Relocations": {
       "type": "object",
-      "description": "Process each group of observations by applying coordinate filters, column mappings, and SQL queries.",
+      "description": "Process each group of observations by applying timezone conversion, filters, coordinate filters, column mappings, and SQL queries.",
       "ecoscope:task_group": true,
       "properties": {
         "filter_obs": {
@@ -240,41 +240,9 @@
         }
       }
     },
-    "persist_obs": {
-      "additionalProperties": false,
-      "properties": {
-        "filetypes": {
-          "default": [
-            "csv"
-          ],
-          "items": {
-            "enum": [
-              "csv",
-              "gpkg",
-              "geoparquet"
-            ],
-            "type": "string"
-          },
-          "title": "Filetypes",
-          "type": "array",
-          "description": "The output format",
-          "uniqueItems": true
-        },
-        "filename_prefix": {
-          "default": "subject_observations",
-          "title": "Filename Prefix",
-          "type": "string",
-          "description": "            Optional filename prefix to persist text to within the `root_path`.\n            We will always add a suffix based on the dataframe content hash to avoid duplicates.\n            ",
-          "ecoscope:advanced": true
-        }
-      },
-      "required": [],
-      "type": "object",
-      "title": "Persist Observation Relocations"
-    },
     "Transform to Trajectories": {
       "type": "object",
-      "description": "Convert filtered observations to trajectories and apply segment processing, SQL queries, and column mappings.",
+      "description": "Convert filtered observations to trajectories and apply custom processing, SQL queries, and column mappings.",
       "ecoscope:task_group": true,
       "properties": {
         "subject_traj": {
@@ -887,12 +855,6 @@
         ]
       }
     },
-    "persist_obs": {
-      "ui:order": [
-        "filetypes",
-        "filename_prefix"
-      ]
-    },
     "Transform to Trajectories": {
       "ui:order": [
         "subject_traj",
@@ -939,7 +901,6 @@
       "Subject Group",
       "Group and Split Data",
       "Process Observation Relocations",
-      "persist_obs",
       "Transform to Trajectories",
       "persist_tracks",
       "Generate Maps"

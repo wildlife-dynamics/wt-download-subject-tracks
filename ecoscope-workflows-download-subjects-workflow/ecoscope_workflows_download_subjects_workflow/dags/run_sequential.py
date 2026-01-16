@@ -329,25 +329,6 @@ def main(params: Params):
         .mapvalues(argnames=["df"], argvalues=customize_columns_obs)
     )
 
-    persist_obs = (
-        persist_df_wrapper.validate()
-        .set_task_instance_id("persist_obs")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                never,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            sanitize=True,
-            **(params_dict.get("persist_obs") or {}),
-        )
-        .mapvalues(argnames=["df"], argvalues=sql_query_obs)
-    )
-
     subject_traj = (
         relocations_to_trajectory.validate()
         .set_task_instance_id("subject_traj")

@@ -15,7 +15,6 @@ rjsf-overrides:
     Generate Maps.properties.skip_map_generation.properties.skip.description: >-
       Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
     persist_tracks.properties.filename_prefix.default: "subject_tracks"
-    persist_obs.properties.filename_prefix.default: "subject_observations"
   
   uiSchema:
     Process Observation Relocations.filter_obs.filter_point_coords.items.ui:options.label: false
@@ -147,19 +146,6 @@ workflow:
         mapvalues:
           argnames: df
           argvalues: ${{ workflow.customize_columns_obs.return }}
-
-  - name: Persist Observation Relocations
-    id: persist_obs
-    task: persist_df_wrapper
-    partial:
-      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
-      sanitize: true
-    mapvalues:
-      argnames: df
-      argvalues: ${{ workflow.sql_query_obs.return }}
-    skipif:
-      conditions:
-        - never
 
   - title: Transform to Trajectories
     type: task-group
