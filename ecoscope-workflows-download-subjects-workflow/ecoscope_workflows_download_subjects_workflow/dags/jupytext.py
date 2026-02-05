@@ -210,6 +210,7 @@ subject_obs_params = dict(
     subject_group_name=...,
     include_details=...,
     include_subjectsource_details=...,
+    filter=...,
 )
 
 # %%
