@@ -173,7 +173,17 @@
           "additionalProperties": false,
           "properties": {
             "drop_columns": {
-              "default": [],
+              "default": [
+                "location",
+                "patrol_serial_number",
+                "patrol_status",
+                "patrol_subject",
+                "patrol_type__value",
+                "subject__content_type",
+                "subject__device_status_properties",
+                "subject__id",
+                "subject__user"
+              ],
               "items": {
                 "type": "string"
               },

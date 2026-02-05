@@ -16,6 +16,7 @@ rjsf-overrides:
       Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
     Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
     persist_tracks.properties.filename_prefix.default: "subject_tracks"
+    Process Observations.properties.customize_columns.properties.drop_columns.default: ["location", "patrol_serial_number", "patrol_status", "patrol_subject", "patrol_type__value", "subject__content_type", "subject__device_status_properties", "subject__user"]
   
   $defs:
     ValueGrouper: {

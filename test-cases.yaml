@@ -7,7 +7,29 @@ base:
       description: "A dashboard for visualizing subject trajectories and home range."
     er_client_name:
       data_source:
-        name: "mep_dev"
+        name: mep_dev
+    subject_obs:
+      subject_group_name: "Ecoscope"
+      include_details: false
+      include_subjectsource_details: false
+    filter_obs:
+      bounding_box:
+        min_y: -90
+        max_y: 90
+        min_x: -180
+        max_x: 180
+      filter_point_coords: []
+    subject_traj:
+      trajectory_segment_filter:
+        min_length_meters: 0.001
+        max_length_meters: 10000.0
+        max_time_secs: 21600.0
+        min_time_secs: 1.0
+        max_speed_kmhr: 10.0
+        min_speed_kmhr: 0.01
+    sql_query:
+      query: ''
+      columns: []
     groupers:
       groupers: []
     time_range:
@@ -47,24 +69,29 @@ month-grouper:
   mock_io: true
   params:
     workflow_details:
-      name: "Subject Tracking Dashboard"
-      description: "A dashboard for visualizing subject trajectories and home range."
-    er_client_name:
-      data_source:
-        name: "mep_dev"
-    groupers:
-      groupers:
-        - "%B"
+      name: "Ecoscope"
+      description: "A workflow to download subjects."
     time_range:
-      since: "2015-01-01T00:00:00"
-      until: "2015-12-31T23:59:59"
+      since: "2015-01-01T00:00:00Z"
+      until: "2015-01-31T23:59:59Z"
       timezone:
         label: "Africa/Nairobi (UTC+03:00)"
         tzCode: "Africa/Nairobi"
         name: "(UTC+03:00) Nairobi"
         utc: "+03:00"
+    er_client_name:
+      data_source:
+        name: "mep_dev"
     subject_obs:
       subject_group_name: "Ecoscope"
+      include_details: true
+      include_subjectsource_details: true
+    filter_obs:
+      filter_point_coords: [
+        {"x": 180.0, "y": 90.0},
+        {"x": 0.0, "y": 0.0},
+        {"x": 1.0, "y": 1.0},
+      ]
     subject_traj:
       trajectory_segment_filter:
         min_length_meters: 0.001
@@ -73,6 +100,53 @@ month-grouper:
         min_time_secs: 1.0
         max_speed_kmhr: 10.0
         min_speed_kmhr: 0.01
+    persist_tracks:
+      filetypes: ["geoparquet", "csv"]
+      filename_prefix: "subject_tracks_with_details"
+    base_map_defs:
+      base_maps:
+        - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+          opacity: 1.0
+        - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          opacity: 0.5
+          max_zoom: 17
+          min_zoom: null
+
+empty-results:
+  name: Empty Results
+  mock_io: false
+  params:
+    workflow_details:
+      name: "Subjects"
+      description: "A workflow to download subjects."
+    time_range:
+      since: "2025-12-21T00:00:00Z"
+      until: "2024-12-23T23:59:59Z" # End date before start date to ensure no results
+      timezone:
+        label: "Africa/Nairobi (UTC+03:00)"
+        tzCode: "Africa/Nairobi"
+        name: "(UTC+03:00) Nairobi"
+        utc: "+03:00"
+    subject_obs:
+      subject_group_name: "Ecoscope"
+      include_details: false
+    filter_obs:
+      filter_point_coords: [
+        {"x": 180.0, "y": 90.0},
+        {"x": 0.0, "y": 0.0},
+        {"x": 1.0, "y": 1.0},
+      ]
+    subject_traj:
+      trajectory_segment_filter:
+        min_length_meters: 0.001
+        max_length_meters: 10000.0
+        max_time_secs: 21600.0
+        min_time_secs: 1.0
+        max_speed_kmhr: 10.0
+        min_speed_kmhr: 0.01
+    persist_tracks:
+      filetypes: ["geoparquet", "csv"]
+      filename_prefix: "subject_tracks"
     base_map_defs:
       base_maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
