@@ -27,6 +27,8 @@ base:
         min_time_secs: 1.0
         max_speed_kmhr: 10.0
         min_speed_kmhr: 0.01
+    customize_columns:
+      drop_columns: ["location", "patrol_serial_number", "patrol_status", "patrol_subject", "patrol_type__value", "subject__content_type", "subject__device_status_properties", "subject__user"]
     sql_query:
       query: ''
       columns: []
@@ -72,8 +74,8 @@ month-grouper:
       name: "Ecoscope"
       description: "A workflow to download subjects."
     time_range:
-      since: "2015-01-01T00:00:00Z"
-      until: "2015-01-31T23:59:59Z"
+      since: "2026-01-01T00:00:00Z"
+      until: "2026-01-07T23:59:59Z"
       timezone:
         label: "Africa/Nairobi (UTC+03:00)"
         tzCode: "Africa/Nairobi"
@@ -112,16 +114,16 @@ month-grouper:
           max_zoom: 17
           min_zoom: null
 
-empty-results:
-  name: Empty Results
+with-filter:
+  name: With a Filter Flag
   mock_io: false
   params:
     workflow_details:
-      name: "Subjects"
+      name: "Ecoscope"
       description: "A workflow to download subjects."
     time_range:
-      since: "2025-12-21T00:00:00Z"
-      until: "2024-12-23T23:59:59Z" # End date before start date to ensure no results
+      since: "2026-01-01T00:00:00Z"
+      until: "2026-01-07T23:59:59Z"
       timezone:
         label: "Africa/Nairobi (UTC+03:00)"
         tzCode: "Africa/Nairobi"
@@ -129,24 +131,12 @@ empty-results:
         utc: "+03:00"
     subject_obs:
       subject_group_name: "Ecoscope"
-      include_details: false
-    filter_obs:
-      filter_point_coords: [
-        {"x": 180.0, "y": 90.0},
-        {"x": 0.0, "y": 0.0},
-        {"x": 1.0, "y": 1.0},
-      ]
-    subject_traj:
-      trajectory_segment_filter:
-        min_length_meters: 0.001
-        max_length_meters: 10000.0
-        max_time_secs: 21600.0
-        min_time_secs: 1.0
-        max_speed_kmhr: 10.0
-        min_speed_kmhr: 0.01
+      filter: "manually_and_automatically_filtered"
+    customize_columns:
+      drop_columns: ["location", "subject__content_type", "subject__country"]
     persist_tracks:
       filetypes: ["geoparquet", "csv"]
-      filename_prefix: "subject_tracks"
+      filename_prefix: "subject_tracks_with_filter"
     base_map_defs:
       base_maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"

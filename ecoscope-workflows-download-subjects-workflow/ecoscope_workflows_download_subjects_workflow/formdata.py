@@ -56,6 +56,30 @@ class SubjectGroup(BaseModel):
     subject_obs: Optional[SubjectObs] = Field(None, title="")
 
 
+<<<<<<< HEAD
+=======
+class CustomizeColumns(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    drop_columns: Optional[List[str]] = Field(
+        [
+            "location",
+            "patrol_serial_number",
+            "patrol_status",
+            "patrol_subject",
+            "patrol_type__value",
+            "subject__content_type",
+            "subject__device_status_properties",
+            "subject__id",
+            "subject__user",
+        ],
+        description="List of columns to drop.",
+        title="Drop Columns",
+    )
+
+
+>>>>>>> 307e1d3 (test)
 class SqlQuery(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
