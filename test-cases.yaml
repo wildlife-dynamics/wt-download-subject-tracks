@@ -84,6 +84,9 @@ month-grouper:
     er_client_name:
       data_source:
         name: "mep_dev"
+    groupers:
+      groupers:
+        - "%B"
     subject_obs:
       subject_group_name: "Ecoscope"
     filter_obs:
