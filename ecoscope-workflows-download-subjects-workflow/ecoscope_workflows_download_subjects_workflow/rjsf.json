@@ -267,6 +267,9 @@
                   },
                   {
                     "$ref": "#/$defs/TemporalGrouper"
+                  },
+                  {
+                    "$ref": "#/$defs/SpatialGrouper"
                   }
                 ],
                 "title": "Group by"
@@ -364,6 +367,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -387,6 +391,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -410,6 +415,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -433,6 +439,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -456,6 +463,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -479,6 +487,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -500,6 +509,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Custom Layer Opacity",
@@ -693,6 +703,10 @@
       ],
       "title": "RenameColumn",
       "type": "object"
+    },
+    "SpatialGrouper": {
+      "title": "Spatial Regions",
+      "type": "string"
     },
     "TemporalGrouper": {
       "oneOf": [

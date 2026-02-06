@@ -164,13 +164,12 @@ Filter track data by setting limits on track segment length, duration, and speed
 ##### Process Columns
 Customize which columns appear in your output.
 
-- **Drop Columns**: Remove specific columns you don't need
-  - Example: `["extra__source", "extra__provider"]`
+- **Drop Columns**: List of columns to drop from the output
+  - Default includes common internal/system columns: `location`, `patrol_serial_number`, `patrol_status`, `patrol_subject`, `patrol_type__value`, `subject__content_type`, `subject__device_status_properties`, `subject__user`
+  - Modify the list based on your requirements - add columns you want to hide or remove columns you want to keep
 - **Retain Columns**: Keep only specific columns in a specific order
-  - Leave empty to keep all columns
-  - Example: `["fixtime", "subject__name", "speed_kmhr", "geometry"]`
-- **Rename Columns**: Change column names
-  - Example: Rename `subject__name` to `Elephant Name`
+  - Leave empty to keep all columns (after dropping)
+  - Example: `["segment_start", "subject__name", "speed_kmhr", "geometry"]`
 
 ##### Apply SQL Query
 Advanced users can filter or transform data using SQL.

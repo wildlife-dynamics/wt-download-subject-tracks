@@ -480,6 +480,8 @@ def main(params: Params):
         .partial(
             subject_id_column="subject__id",
             output_column="subject_colormap",
+            fallback_strategy="default_color",
+            default_color="#FFFF00",
             default_palette="tab20b",
             additional_column="subject__additional",
             **(params_dict.get("colormap_traj") or {}),
