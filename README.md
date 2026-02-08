@@ -167,9 +167,6 @@ Customize which columns appear in your output.
 - **Drop Columns**: List of columns to drop from the output
   - Default includes common internal/system columns: `location`, `patrol_serial_number`, `patrol_status`, `patrol_subject`, `patrol_type__value`, `subject__content_type`, `subject__device_status_properties`, `subject__user`
   - Modify the list based on your requirements - add columns you want to hide or remove columns you want to keep
-- **Retain Columns**: Keep only specific columns in a specific order
-  - Leave empty to keep all columns (after dropping)
-  - Example: `["segment_start", "subject__name", "speed_kmhr", "geometry"]`
 
 ##### Apply SQL Query
 Advanced users can filter or transform data using SQL.
@@ -195,7 +192,7 @@ Customize the background maps for your visualizations.
 Once you've configured all the settings:
 
 1. **Review your configuration**
-   - Double-check your time range, data source, and event types
+   - Double-check your time range, data source, and subject group
 
 2. **Save and run**
    - Click the "Submit" and the workflow will show up in "My Workflows" table button in Ecoscope Desktop
@@ -205,7 +202,7 @@ Once you've configured all the settings:
    - You'll see status updates as the workflow runs
    - Processing time depends on:
      - The size of your date range
-     - Number of weather stations
+     - Number of subjects in the group
      - Number of observations in the system
    - The workflow completes with status "Success" or "Failed"
 
