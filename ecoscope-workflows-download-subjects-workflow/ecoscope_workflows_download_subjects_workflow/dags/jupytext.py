@@ -210,7 +210,6 @@ subject_obs_params = dict(
     subject_group_name=...,
     include_details=...,
     include_subjectsource_details=...,
-    filter=...,
 )
 
 # %%
@@ -473,8 +472,6 @@ customize_columns_internally = (
 
 customize_columns_params = dict(
     drop_columns=...,
-    retain_columns=...,
-    rename_columns=...,
 )
 
 # %%
@@ -492,7 +489,12 @@ customize_columns = (
         ],
         unpack_depth=1,
     )
-    .partial(df=customize_columns_internally, **customize_columns_params)
+    .partial(
+        df=customize_columns_internally,
+        rename_columns={},
+        retain_columns=[],
+        **customize_columns_params,
+    )
     .call()
 )
 

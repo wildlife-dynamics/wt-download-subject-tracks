@@ -10,7 +10,6 @@ channels = [
 ]
 platforms = [
     "linux-64",
-    "linux-aarch64",
     "osx-arm64",
     "win-64",
     "osx-64",
