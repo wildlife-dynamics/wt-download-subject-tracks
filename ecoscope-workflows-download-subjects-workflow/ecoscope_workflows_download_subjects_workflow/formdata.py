@@ -57,7 +57,7 @@ class CustomizeColumns(BaseModel):
             "subject__device_status_properties",
             "subject__user",
         ],
-        description="List of columns to drop.",
+        description="Columns to drop from the event dataset, with defaults based on common Ecoscope practices. Modify the list based on your requirements.",
         title="Drop Columns",
     )
 
