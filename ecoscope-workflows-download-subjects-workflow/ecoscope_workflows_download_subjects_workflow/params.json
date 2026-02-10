@@ -78,7 +78,7 @@
         },
         "include_details": {
           "default": false,
-          "title": "Include Details",
+          "title": "Include Observation Details",
           "type": "boolean",
           "description": "Whether or not to include observation details",
           "ecoscope:advanced": true
@@ -88,6 +88,20 @@
           "title": "Include Subject Source Details",
           "type": "boolean",
           "description": "Whether or not to include subject source details",
+          "ecoscope:advanced": true
+        },
+        "filter": {
+          "default": "clean",
+          "enum": [
+            "none",
+            "clean",
+            "manually_filtered",
+            "automatically_filtered",
+            "manually_and_automatically_filtered"
+          ],
+          "title": "Filter",
+          "type": "string",
+          "description": "Filter observations based on exclusion flags.",
           "ecoscope:advanced": true
         }
       },
@@ -180,7 +194,7 @@
       "properties": {
         "query": {
           "default": "",
-          "title": "Query",
+          "title": "SQL Query",
           "type": "string",
           "description": "SQL query string to apply to the DataFrame. Leaves it unchanged when the field is emptyUse 'df' as the table name in the query.",
           "ecoscope:advanced": true
@@ -212,6 +226,9 @@
               },
               {
                 "$ref": "#/$defs/TemporalGrouper"
+              },
+              {
+                "$ref": "#/$defs/SpatialGrouper"
               }
             ],
             "title": "Group by"
@@ -302,6 +319,7 @@
                   "opacity": {
                     "default": 1,
                     "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
                     "maximum": 1.0,
                     "minimum": 0.0,
                     "title": "Layer Opacity",
@@ -325,6 +343,7 @@
                   "opacity": {
                     "default": 1,
                     "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
                     "maximum": 1.0,
                     "minimum": 0.0,
                     "title": "Layer Opacity",
@@ -348,6 +367,7 @@
                   "opacity": {
                     "default": 1,
                     "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
                     "maximum": 1.0,
                     "minimum": 0.0,
                     "title": "Layer Opacity",
@@ -371,6 +391,7 @@
                   "opacity": {
                     "default": 1,
                     "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
                     "maximum": 1.0,
                     "minimum": 0.0,
                     "title": "Layer Opacity",
@@ -394,6 +415,7 @@
                   "opacity": {
                     "default": 1,
                     "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
                     "maximum": 1.0,
                     "minimum": 0.0,
                     "title": "Layer Opacity",
@@ -417,6 +439,7 @@
                   "opacity": {
                     "default": 1,
                     "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
                     "maximum": 1.0,
                     "minimum": 0.0,
                     "title": "Layer Opacity",
@@ -438,6 +461,7 @@
                   "opacity": {
                     "default": 1,
                     "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                    "ecoscope:advanced": true,
                     "maximum": 1.0,
                     "minimum": 0.0,
                     "title": "Custom Layer Opacity",
@@ -612,6 +636,10 @@
       "title": "TrajectorySegmentFilter",
       "type": "object"
     },
+    "SpatialGrouper": {
+      "title": "Spatial Regions",
+      "type": "string"
+    },
     "TemporalGrouper": {
       "oneOf": [
         {
@@ -674,7 +702,8 @@
       "ui:order": [
         "subject_group_name",
         "include_details",
-        "include_subjectsource_details"
+        "include_subjectsource_details",
+        "filter"
       ]
     },
     "filter_obs": {

@@ -83,7 +83,7 @@
             },
             "include_details": {
               "default": true,
-              "title": "Include Details",
+              "title": "Include Observation Details",
               "type": "boolean",
               "description": "Whether or not to include observation details",
               "ecoscope:advanced": true
@@ -93,6 +93,20 @@
               "title": "Include Subject Source Details",
               "type": "boolean",
               "description": "Whether or not to include subject source details",
+              "ecoscope:advanced": true
+            },
+            "filter": {
+              "default": "clean",
+              "enum": [
+                "none",
+                "clean",
+                "manually_filtered",
+                "automatically_filtered",
+                "manually_and_automatically_filtered"
+              ],
+              "title": "Filter",
+              "type": "string",
+              "description": "Filter observations based on exclusion flags.",
               "ecoscope:advanced": true
             }
           },
@@ -181,14 +195,28 @@
                 "patrol_type__value",
                 "subject__content_type",
                 "subject__device_status_properties",
-                "subject__user"
+                "subject__user",
+                "subject__common_name",
+                "subject__country",
+                "subject__created_at",
+                "subject__image_url",
+                "subject__last_position",
+                "subject__last_position_date",
+                "subject__last_position_status",
+                "subject__tracks_available",
+                "subject__updated_at",
+                "subject__url",
+                "subjectsource__additional",
+                "subjectsource__location",
+                "subjectsource__source",
+                "subjectsource__subject"
               ],
               "items": {
                 "type": "string"
               },
               "title": "Drop Columns",
               "type": "array",
-              "description": "Columns to drop from the event dataset, with defaults based on common Ecoscope practices. Modify the list based on your requirements.",
+              "description": "Columns to drop from the subject dataset, with defaults based on common Ecoscope practices. Modify the list based on your requirements.",
               "ecoscope:advanced": true
             }
           },
@@ -201,7 +229,7 @@
           "properties": {
             "query": {
               "default": "",
-              "title": "Query",
+              "title": "SQL Query",
               "type": "string",
               "description": "SQL query string to apply to the DataFrame. Leaves it unchanged when the field is emptyUse 'df' as the table name in the query.",
               "ecoscope:advanced": true
@@ -233,6 +261,9 @@
                   },
                   {
                     "$ref": "#/$defs/TemporalGrouper"
+                  },
+                  {
+                    "$ref": "#/$defs/SpatialGrouper"
                   }
                 ],
                 "title": "Group by"
@@ -330,6 +361,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -353,6 +385,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -376,6 +409,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -399,6 +433,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -422,6 +457,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -445,6 +481,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Layer Opacity",
@@ -466,6 +503,7 @@
                       "opacity": {
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
+                        "ecoscope:advanced": true,
                         "maximum": 1.0,
                         "minimum": 0.0,
                         "title": "Custom Layer Opacity",
@@ -642,6 +680,10 @@
       "title": "TrajectorySegmentFilter",
       "type": "object"
     },
+    "SpatialGrouper": {
+      "title": "Spatial Regions",
+      "type": "string"
+    },
     "TemporalGrouper": {
       "oneOf": [
         {
@@ -705,7 +747,8 @@
         "ui:order": [
           "subject_group_name",
           "include_details",
-          "include_subjectsource_details"
+          "include_subjectsource_details",
+          "filter"
         ]
       }
     },
@@ -735,15 +778,6 @@
           "query",
           "columns"
         ]
-      },
-      "customize_columns": {
-        "rename_columns": {
-          "items": {
-            "ui:options": {
-              "label": false
-            }
-          }
-        }
       }
     },
     "persist_tracks": {
