@@ -17,6 +17,14 @@ class WorkflowDetails(BaseModel):
     description: str | None = Field("", title="Workflow Description")
 
 
+class Filter(str, Enum):
+    none = "none"
+    clean = "clean"
+    manually_filtered = "manually_filtered"
+    automatically_filtered = "automatically_filtered"
+    manually_and_automatically_filtered = "manually_and_automatically_filtered"
+
+
 class SubjectObs(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -29,12 +37,26 @@ class SubjectObs(BaseModel):
     include_details: bool | None = Field(
         False,
         description="Whether or not to include observation details",
-        title="Include Details",
+        title="Include Observation Details",
     )
     include_subjectsource_details: bool | None = Field(
         False,
         description="Whether or not to include subject source details",
         title="Include Subject Source Details",
+    )
+    filter: Filter | None = Field(
+        "clean",
+        description="Filter observations based on exclusion flags.",
+        title="Filter",
+    )
+
+
+class CustomizeColumns(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    drop_columns: list[str] | None = Field(
+        [], description="List of columns to drop.", title="Drop Columns"
     )
 
 
@@ -45,7 +67,7 @@ class SqlQuery(BaseModel):
     query: str | None = Field(
         "",
         description="SQL query string to apply to the DataFrame. Leaves it unchanged when the field is emptyUse 'df' as the table name in the query.",
-        title="Query",
+        title="SQL Query",
     )
     columns: list[str] | None = Field(
         None,
@@ -295,9 +317,8 @@ class TrajectorySegmentFilter(BaseModel):
     )
 
 
-class RenameColumn(BaseModel):
-    original_name: str = Field(..., title="Original Name")
-    new_name: str = Field(..., title="New Name")
+class SpatialGrouper(RootModel[str]):
+    root: str = Field(..., title="Spatial Regions")
 
 
 class TemporalGrouper(str, Enum):
@@ -371,28 +392,11 @@ class SubjectTraj(BaseModel):
     )
 
 
-class CustomizeColumns(BaseModel):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
-    drop_columns: list[str] | None = Field(
-        [], description="List of columns to drop.", title="Drop Columns"
-    )
-    retain_columns: list[str] | None = Field(
-        [],
-        description="List of columns to retain with the order specified by the list.\n                        Keep all the columns if the list is empty.",
-        title="Retain Columns",
-    )
-    rename_columns: list[RenameColumn] | None = Field(
-        {}, description="Dictionary of columns to rename.", title="Rename Columns"
-    )
-
-
 class Groupers(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
     )
-    groupers: list[ValueGrouper | TemporalGrouper] | None = Field(
+    groupers: list[ValueGrouper | TemporalGrouper | SpatialGrouper] | None = Field(
         None,
         description="            Specify how the data should be grouped to create the views for your dashboard.\n            This field is optional; if left blank, all the data will appear in a single view.\n            ",
         title=" ",

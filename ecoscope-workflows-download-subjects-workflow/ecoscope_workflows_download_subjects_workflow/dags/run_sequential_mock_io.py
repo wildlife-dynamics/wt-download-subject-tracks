@@ -329,6 +329,8 @@ def main(params: Params):
         )
         .partial(
             df=customize_columns_internally,
+            rename_columns={},
+            retain_columns=[],
             **(params_dict.get("customize_columns") or {}),
         )
         .call()
@@ -494,6 +496,8 @@ def main(params: Params):
         .partial(
             subject_id_column="subject__id",
             output_column="subject_colormap",
+            fallback_strategy="default_color",
+            default_color="#FFFF00",
             default_palette="tab20b",
             additional_column="subject__additional",
             **(params_dict.get("colormap_traj") or {}),
