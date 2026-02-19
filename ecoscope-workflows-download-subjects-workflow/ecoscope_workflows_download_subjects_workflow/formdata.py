@@ -354,12 +354,12 @@ class TrajectorySegmentFilter(BaseModel):
     )
 
 
-class SpatialGrouper(RootModel[str]):
-    root: str = Field(..., title="Spatial Regions")
+class SpatialGrouper(BaseModel):
+    spatial_index_name: str = Field(..., title="Spatial Regions")
 
 
-class TemporalGrouper(RootModel[str]):
-    root: str = Field(..., title="Time")
+class TemporalGrouper(BaseModel):
+    temporal_index: str = Field(..., title="Time")
 
 
 class ValueGrouper(RootModel[str]):

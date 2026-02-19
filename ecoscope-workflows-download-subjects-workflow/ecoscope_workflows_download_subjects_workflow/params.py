@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, confloat, constr
+from pydantic import BaseModel, ConfigDict, Field, confloat, constr
 
 
 class WorkflowDetails(BaseModel):
@@ -318,16 +318,16 @@ class TrajectorySegmentFilter(BaseModel):
     )
 
 
-class SpatialGrouper(RootModel[str]):
-    root: str = Field(..., title="Spatial Regions")
+class SpatialGrouper(BaseModel):
+    spatial_index_name: str = Field(..., title="Spatial Regions")
 
 
-class TemporalGrouper(RootModel[str]):
-    root: str = Field(..., title="Time")
+class TemporalGrouper(BaseModel):
+    temporal_index: str = Field(..., title="Time")
 
 
-class ValueGrouper(RootModel[str]):
-    root: str = Field(..., title="Category")
+class ValueGrouper(BaseModel):
+    index_name: str = Field(..., title="Category")
 
 
 class TimeRange(BaseModel):

@@ -8,10 +8,6 @@ base:
     er_client_name:
       data_source:
         name: mep_dev
-    subject_obs:
-      subject_group_name: "Ecoscope"
-      include_details: false
-      include_subjectsource_details: false
     filter_obs:
       bounding_box:
         min_y: -90
@@ -220,6 +216,52 @@ skip-maps:
         utc: "+03:00"
     subject_obs:
       subject_group_name: "Ecoscope"
+    base_map_defs:
+      base_maps:
+        - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+          opacity: 1.0
+        - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          opacity: 0.5
+          max_zoom: 17
+          min_zoom: null
+    skip_map_generation:
+      skip: true
+
+no-subjectsource-details:
+  name: No subjectsource details with default drop_columns
+  mock_io: true
+  params:
+    workflow_details:
+      name: "Subject Tracking"
+      description: "Test dropping subjectsource columns when details not included."
+    time_range:
+      since: "2015-01-01T00:00:00Z"
+      until: "2015-01-07T23:59:59Z"
+      timezone:
+        label: "Africa/Nairobi (UTC+03:00)"
+        tzCode: "Africa/Nairobi"
+        name: "(UTC+03:00) Nairobi"
+        utc: "+03:00"
+    er_client_name:
+      data_source:
+        name: "mep_dev"
+    subject_obs:
+      subject_group_name: "Ecoscope"
+      include_details: true
+      include_subjectsource_details: false
+    customize_columns:
+      drop_columns: ["location", "patrol_serial_number", "patrol_status", "patrol_subject", "patrol_type__value", "subject__content_type", "subject__device_status_properties", "subject__user", "subject__common_name", "subject__country", "subject__created_at", "subject__image_url", "subject__last_position", "subject__last_position_date", "subject__last_position_status", "subject__tracks_available", "subject__updated_at", "subject__url", "subjectsource__additional", "subjectsource__location", "subjectsource__source", "subjectsource__subject"]
+    subject_traj:
+      trajectory_segment_filter:
+        min_length_meters: 0.001
+        max_length_meters: 10000.0
+        max_time_secs: 21600.0
+        min_time_secs: 1.0
+        max_speed_kmhr: 10.0
+        min_speed_kmhr: 0.01
+    persist_tracks:
+      filetypes: ["geoparquet"]
+      filename_prefix: "subject_tracks"
     base_map_defs:
       base_maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
