@@ -109,7 +109,7 @@
         "subject_group_name"
       ],
       "type": "object",
-      "title": ""
+      "title": "Get Subject Group Observations from EarthRanger"
     },
     "filter_obs": {
       "additionalProperties": false,

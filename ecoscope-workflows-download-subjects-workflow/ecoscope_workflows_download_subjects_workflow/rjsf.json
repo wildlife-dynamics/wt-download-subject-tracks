@@ -68,55 +68,48 @@
       "type": "object",
       "title": "Data Source"
     },
-    "Subject Group": {
-      "type": "object",
-      "description": "Choose a subject group to analyze",
-      "ecoscope:task_group": true,
+    "subject_obs": {
+      "additionalProperties": false,
       "properties": {
-        "subject_obs": {
-          "additionalProperties": false,
-          "properties": {
-            "subject_group_name": {
-              "title": "Subject Group Name",
-              "type": "string",
-              "description": "\u26a0\ufe0f The use of a group with mixed subtypes could lead to unexpected results"
-            },
-            "include_details": {
-              "default": true,
-              "title": "Include Observation Details",
-              "type": "boolean",
-              "description": "Whether or not to include observation details",
-              "ecoscope:advanced": true
-            },
-            "include_subjectsource_details": {
-              "default": false,
-              "title": "Include Subject Source Details",
-              "type": "boolean",
-              "description": "Whether or not to include subject source details",
-              "ecoscope:advanced": true
-            },
-            "filter": {
-              "default": "clean",
-              "enum": [
-                "none",
-                "clean",
-                "manually_filtered",
-                "automatically_filtered",
-                "manually_and_automatically_filtered"
-              ],
-              "title": "Filter",
-              "type": "string",
-              "description": "Filter observations based on exclusion flags.",
-              "ecoscope:advanced": true
-            }
-          },
-          "required": [
-            "subject_group_name"
+        "subject_group_name": {
+          "title": "Subject Group Name",
+          "type": "string",
+          "description": "\u26a0\ufe0f The use of a group with mixed subtypes could lead to unexpected results"
+        },
+        "include_details": {
+          "default": false,
+          "title": "Include Observation Details",
+          "type": "boolean",
+          "description": "Whether or not to include observation details",
+          "ecoscope:advanced": true
+        },
+        "include_subjectsource_details": {
+          "default": false,
+          "title": "Include Subject Source Details",
+          "type": "boolean",
+          "description": "Whether or not to include subject source details",
+          "ecoscope:advanced": true
+        },
+        "filter": {
+          "default": "clean",
+          "enum": [
+            "none",
+            "clean",
+            "manually_filtered",
+            "automatically_filtered",
+            "manually_and_automatically_filtered"
           ],
-          "type": "object",
-          "title": ""
+          "title": "Filter",
+          "type": "string",
+          "description": "Filter observations based on exclusion flags.",
+          "ecoscope:advanced": true
         }
-      }
+      },
+      "required": [
+        "subject_group_name"
+      ],
+      "type": "object",
+      "title": "Get Subject Group Observations from EarthRanger"
     },
     "Process Observations": {
       "type": "object",
@@ -760,15 +753,13 @@
         "timezone"
       ]
     },
-    "Subject Group": {
-      "subject_obs": {
-        "ui:order": [
-          "subject_group_name",
-          "include_details",
-          "include_subjectsource_details",
-          "filter"
-        ]
-      }
+    "subject_obs": {
+      "ui:order": [
+        "subject_group_name",
+        "include_details",
+        "include_subjectsource_details",
+        "filter"
+      ]
     },
     "Process Observations": {
       "ui:order": [
@@ -814,7 +805,7 @@
       "workflow_details",
       "time_range",
       "er_client_name",
-      "Subject Group",
+      "subject_obs",
       "Process Observations",
       "persist_tracks",
       "Generate Maps"

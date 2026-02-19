@@ -201,7 +201,7 @@ er_client_name = (
 
 
 # %% [markdown]
-# ##
+# ## Get Subject Group Observations from EarthRanger
 
 # %%
 # parameters

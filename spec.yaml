@@ -11,7 +11,6 @@ requirements:
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 rjsf-overrides:
   properties:
-    Subject Group.properties.subject_obs.properties.include_details.default: true
     Generate Maps.properties.skip_map_generation.properties.skip.description: >-
       Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
     Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
@@ -59,18 +58,13 @@ workflow:
     task: set_er_connection
 
   # subject group observations
-  - title: Subject Group
-    type: task-group
-    description: >-
-      Choose a subject group to analyze
-    tasks:
-      - name: "" # Get Subject Group Observations from EarthRanger
-        id: subject_obs
-        task: get_subjectgroup_observations
-        partial:
-          client: ${{ workflow.er_client_name.return }}
-          time_range: ${{ workflow.time_range.return }}
-          raise_on_empty: false
+  - name: "Get Subject Group Observations from EarthRanger"
+    id: subject_obs
+    task: get_subjectgroup_observations
+    partial:
+      client: ${{ workflow.er_client_name.return }}
+      time_range: ${{ workflow.time_range.return }}
+      raise_on_empty: false
 
   - name: Warn if mixed subtype
     id: warn_if_mixed_subtype

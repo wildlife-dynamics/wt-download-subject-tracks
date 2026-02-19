@@ -113,8 +113,8 @@ These optional settings provide additional control over your workflow:
 Whether or not to include observation details in the output data.
 
 - **Include Details**: Include additional details from each observation
-  - Default: `true` (details included)
-  - Uncheck to exclude detailed observation information
+  - Default: `false` (not included)
+  - check to include detailed observation information
 
 ##### Include Subject Source Details
 Whether or not to include subject source details in the output data.
