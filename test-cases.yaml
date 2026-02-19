@@ -82,7 +82,7 @@ month-grouper:
         name: "mep_dev"
     groupers:
       groupers:
-        - "%B"
+        - temporal_index: "%B"
     subject_obs:
       subject_group_name: "Ecoscope"
     filter_obs:

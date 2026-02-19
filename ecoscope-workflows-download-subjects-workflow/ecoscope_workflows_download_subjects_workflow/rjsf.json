@@ -254,9 +254,6 @@
                   },
                   {
                     "$ref": "#/$defs/TemporalGrouper"
-                  },
-                  {
-                    "$ref": "#/$defs/SpatialGrouper"
                   }
                 ],
                 "title": "Group by"
