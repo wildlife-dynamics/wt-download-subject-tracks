@@ -123,6 +123,16 @@ Whether or not to include subject source details in the output data.
   - Default: `false` (not included)
   - Check to include device and source information
 
+##### Observation Exclusion Filter
+Control which observations are returned based on EarthRanger's exclusion flags. Exclusion flags are data quality markers set on each observation in EarthRanger.
+
+- **Filter**: Select which observations to include based on their exclusion status
+  - `clean` (default): Only observations that have not been flagged as problematic
+  - `none`: All observations regardless of exclusion flags (raw data)
+  - `manually_filtered`: Only observations that were manually flagged
+  - `automatically_filtered`: Only observations that were automatically flagged
+  - `manually_and_automatically_filtered`: Observations flagged either manually or automatically
+
 #### Process Observations
 
 ##### Bounding Box
