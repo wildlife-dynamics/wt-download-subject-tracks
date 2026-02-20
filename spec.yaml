@@ -1,25 +1,28 @@
 id: download_subjects
 requirements:
   - name: ecoscope-workflows-core
-    version: ">=0.22.2,<0.23"
+    version: ">=0.22.12, <0.23.0"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-ecoscope
-    version: ">=0.22.2,<0.23"
+    version: ">=0.22.12, <0.23.0"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-custom
-    version: ">=0.0.24, <0.1.0"
+    version: ">=0.0.28, <0.1.0"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 rjsf-overrides:
   properties:
-    Subject Group.properties.subject_obs.properties.include_details.default: true
     Generate Maps.properties.skip_map_generation.properties.skip.description: >-
       Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
     Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
     persist_tracks.properties.filename_prefix.default: "subject_tracks"
+    persist_tracks.properties.filetypes.default: ["geoparquet"]
     Process Observations.properties.customize_columns.properties.drop_columns.default: ["location", "patrol_serial_number", "patrol_status", "patrol_subject", "patrol_type__value", "subject__content_type", "subject__device_status_properties", "subject__user", "subject__common_name", "subject__country", "subject__created_at", "subject__image_url", "subject__last_position", "subject__last_position_date", "subject__last_position_status", "subject__tracks_available", "subject__updated_at", "subject__url", "subjectsource__additional", "subjectsource__location", "subjectsource__source", "subjectsource__subject"]
     Process Observations.properties.customize_columns.properties.drop_columns.description: >-
       Columns to drop from the subject dataset, with defaults based on common Ecoscope practices. Modify the list based on your requirements.
-  
+    Process Observations.properties.groupers.properties.groupers.items.anyOf:
+      - {"$ref": "#/$defs/ValueGrouper"}
+      - {"$ref": "#/$defs/TemporalGrouper"}
+
   $defs:
     ValueGrouper: {
       description: "Use a categorical column to group data by. If you're unsure which columns are available, run the workflow once without grouping to see the data, then configure grouping in a subsequent run.",
@@ -58,18 +61,13 @@ workflow:
     task: set_er_connection
 
   # subject group observations
-  - title: Subject Group
-    type: task-group
-    description: >-
-      Choose a subject group to analyze
-    tasks:
-      - name: "" # Get Subject Group Observations from EarthRanger
-        id: subject_obs
-        task: get_subjectgroup_observations
-        partial:
-          client: ${{ workflow.er_client_name.return }}
-          time_range: ${{ workflow.time_range.return }}
-          raise_on_empty: false
+  - name: "Get Subject Group Observations from EarthRanger"
+    id: subject_obs
+    task: get_subjectgroup_observations
+    partial:
+      client: ${{ workflow.er_client_name.return }}
+      time_range: ${{ workflow.time_range.return }}
+      raise_on_empty: false
 
   - name: Warn if mixed subtype
     id: warn_if_mixed_subtype
@@ -132,6 +130,7 @@ workflow:
           rename_columns: {}
           drop_columns: ["id"] # drop 'id' to avoid conflict with `id` in the index
           retain_columns: []
+          raise_if_not_found: false
 
       - name: Process Columns
         id: customize_columns
@@ -140,6 +139,7 @@ workflow:
           df: ${{ workflow.customize_columns_internally.return }}
           rename_columns: {}
           retain_columns: []
+          raise_if_not_found: false
 
       - name: Apply SQL Query
         id: sql_query
@@ -235,6 +235,7 @@ workflow:
         partial:
           drop_columns: []
           retain_columns: []
+          raise_if_not_found: false
           rename_columns:
             segment_start: "Start"
             timespan_seconds: "Duration (s)"

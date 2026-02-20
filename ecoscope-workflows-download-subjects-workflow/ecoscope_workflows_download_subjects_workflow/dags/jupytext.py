@@ -201,7 +201,7 @@ er_client_name = (
 
 
 # %% [markdown]
-# ##
+# ## Get Subject Group Observations from EarthRanger
 
 # %%
 # parameters
@@ -459,6 +459,7 @@ customize_columns_internally = (
         rename_columns={},
         drop_columns=["id"],
         retain_columns=[],
+        raise_if_not_found=False,
         **customize_columns_internally_params,
     )
     .call()
@@ -494,6 +495,7 @@ customize_columns = (
         df=customize_columns_internally,
         rename_columns={},
         retain_columns=[],
+        raise_if_not_found=False,
         **customize_columns_params,
     )
     .call()
@@ -842,6 +844,7 @@ rename_display_columns = (
     .partial(
         drop_columns=[],
         retain_columns=[],
+        raise_if_not_found=False,
         rename_columns={
             "segment_start": "Start",
             "timespan_seconds": "Duration (s)",

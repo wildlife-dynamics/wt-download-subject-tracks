@@ -310,6 +310,7 @@ def main(params: Params):
             rename_columns={},
             drop_columns=["id"],
             retain_columns=[],
+            raise_if_not_found=False,
             **(params_dict.get("customize_columns_internally") or {}),
         )
         .call()
@@ -331,6 +332,7 @@ def main(params: Params):
             df=customize_columns_internally,
             rename_columns={},
             retain_columns=[],
+            raise_if_not_found=False,
             **(params_dict.get("customize_columns") or {}),
         )
         .call()
@@ -541,6 +543,7 @@ def main(params: Params):
         .partial(
             drop_columns=[],
             retain_columns=[],
+            raise_if_not_found=False,
             rename_columns={
                 "segment_start": "Start",
                 "timespan_seconds": "Duration (s)",

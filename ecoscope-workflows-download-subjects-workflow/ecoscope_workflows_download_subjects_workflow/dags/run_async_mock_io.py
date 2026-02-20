@@ -362,6 +362,7 @@ def main(params: Params):
                 "drop_columns": [
                     "id",
                 ],
+                "raise_if_not_found": False,
             }
             | (params_dict.get("customize_columns_internally") or {}),
             method="call",
@@ -381,6 +382,7 @@ def main(params: Params):
             .set_executor("lithops"),
             partial={
                 "df": DependsOn("customize_columns_internally"),
+                "raise_if_not_found": False,
             }
             | (params_dict.get("customize_columns") or {}),
             method="call",
@@ -608,6 +610,7 @@ def main(params: Params):
             )
             .set_executor("lithops"),
             partial={
+                "raise_if_not_found": False,
                 "rename_columns": {
                     "segment_start": "Start",
                     "timespan_seconds": "Duration (s)",

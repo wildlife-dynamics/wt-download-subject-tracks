@@ -113,8 +113,8 @@ These optional settings provide additional control over your workflow:
 Whether or not to include observation details in the output data.
 
 - **Include Details**: Include additional details from each observation
-  - Default: `true` (details included)
-  - Uncheck to exclude detailed observation information
+  - Default: `false` (not included)
+  - check to include detailed observation information
 
 ##### Include Subject Source Details
 Whether or not to include subject source details in the output data.
@@ -122,6 +122,16 @@ Whether or not to include subject source details in the output data.
 - **Include Subject Source Details**: Include information about the tracking device/source
   - Default: `false` (not included)
   - Check to include device and source information
+
+##### Observation Exclusion Filter
+Control which observations are returned based on EarthRanger's exclusion flags. Exclusion flags are data quality markers set on each observation in EarthRanger.
+
+- **Filter**: Select which observations to include based on their exclusion status
+  - `clean` (default): Only observations that have not been flagged as problematic
+  - `none`: All observations regardless of exclusion flags (raw data)
+  - `manually_filtered`: Only observations that were manually flagged
+  - `automatically_filtered`: Only observations that were automatically flagged
+  - `manually_and_automatically_filtered`: Observations flagged either manually or automatically
 
 #### Process Observations
 

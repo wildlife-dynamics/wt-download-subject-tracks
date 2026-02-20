@@ -68,55 +68,48 @@
       "type": "object",
       "title": "Data Source"
     },
-    "Subject Group": {
-      "type": "object",
-      "description": "Choose a subject group to analyze",
-      "ecoscope:task_group": true,
+    "subject_obs": {
+      "additionalProperties": false,
       "properties": {
-        "subject_obs": {
-          "additionalProperties": false,
-          "properties": {
-            "subject_group_name": {
-              "title": "Subject Group Name",
-              "type": "string",
-              "description": "\u26a0\ufe0f The use of a group with mixed subtypes could lead to unexpected results"
-            },
-            "include_details": {
-              "default": true,
-              "title": "Include Observation Details",
-              "type": "boolean",
-              "description": "Whether or not to include observation details",
-              "ecoscope:advanced": true
-            },
-            "include_subjectsource_details": {
-              "default": false,
-              "title": "Include Subject Source Details",
-              "type": "boolean",
-              "description": "Whether or not to include subject source details",
-              "ecoscope:advanced": true
-            },
-            "filter": {
-              "default": "clean",
-              "enum": [
-                "none",
-                "clean",
-                "manually_filtered",
-                "automatically_filtered",
-                "manually_and_automatically_filtered"
-              ],
-              "title": "Filter",
-              "type": "string",
-              "description": "Filter observations based on exclusion flags.",
-              "ecoscope:advanced": true
-            }
-          },
-          "required": [
-            "subject_group_name"
+        "subject_group_name": {
+          "title": "Subject Group Name",
+          "type": "string",
+          "description": "\u26a0\ufe0f The use of a group with mixed subtypes could lead to unexpected results"
+        },
+        "include_details": {
+          "default": false,
+          "title": "Include Observation Details",
+          "type": "boolean",
+          "description": "Whether or not to include observation details",
+          "ecoscope:advanced": true
+        },
+        "include_subjectsource_details": {
+          "default": false,
+          "title": "Include Subject Source Details",
+          "type": "boolean",
+          "description": "Whether or not to include subject source details",
+          "ecoscope:advanced": true
+        },
+        "filter": {
+          "default": "clean",
+          "enum": [
+            "none",
+            "clean",
+            "manually_filtered",
+            "automatically_filtered",
+            "manually_and_automatically_filtered"
           ],
-          "type": "object",
-          "title": ""
+          "title": "Filter",
+          "type": "string",
+          "description": "Filter observations based on exclusion flags.",
+          "ecoscope:advanced": true
         }
-      }
+      },
+      "required": [
+        "subject_group_name"
+      ],
+      "type": "object",
+      "title": "Get Subject Group Observations from EarthRanger"
     },
     "Process Observations": {
       "type": "object",
@@ -261,9 +254,6 @@
                   },
                   {
                     "$ref": "#/$defs/TemporalGrouper"
-                  },
-                  {
-                    "$ref": "#/$defs/SpatialGrouper"
                   }
                 ],
                 "title": "Group by"
@@ -284,7 +274,7 @@
       "properties": {
         "filetypes": {
           "default": [
-            "csv"
+            "geoparquet"
           ],
           "items": {
             "enum": [
@@ -681,46 +671,64 @@
       "type": "object"
     },
     "SpatialGrouper": {
-      "title": "Spatial Regions",
-      "type": "string"
+      "properties": {
+        "spatial_index_name": {
+          "title": "Spatial Regions",
+          "type": "string"
+        }
+      },
+      "required": [
+        "spatial_index_name"
+      ],
+      "title": "Spatial",
+      "type": "object"
     },
     "TemporalGrouper": {
-      "oneOf": [
-        {
-          "const": "%Y",
-          "title": "Year (example: 2024)"
-        },
-        {
-          "const": "%B",
-          "title": "Month (example: September)"
-        },
-        {
-          "const": "%Y-%m",
-          "title": "Year and Month (example: 2023-01)"
-        },
-        {
-          "const": "%j",
-          "title": "Day of the year as a number (example: 365)"
-        },
-        {
-          "const": "%d",
-          "title": "Day of the month as a number (example: 31)"
-        },
-        {
-          "const": "%A",
-          "title": "Day of the week (example: Sunday)"
-        },
-        {
-          "const": "%H",
-          "title": "Hour (24-hour clock) as number (example: 22)"
-        },
-        {
-          "const": "%Y-%m-%d",
-          "title": "Date (example: 2025-01-31)"
+      "properties": {
+        "temporal_index": {
+          "oneOf": [
+            {
+              "const": "%Y",
+              "title": "Year (example: 2024)"
+            },
+            {
+              "const": "%B",
+              "title": "Month (example: September)"
+            },
+            {
+              "const": "%Y-%m",
+              "title": "Year and Month (example: 2023-01)"
+            },
+            {
+              "const": "%j",
+              "title": "Day of the year as a number (example: 365)"
+            },
+            {
+              "const": "%d",
+              "title": "Day of the month as a number (example: 31)"
+            },
+            {
+              "const": "%A",
+              "title": "Day of the week (example: Sunday)"
+            },
+            {
+              "const": "%H",
+              "title": "Hour (24-hour clock) as number (example: 22)"
+            },
+            {
+              "const": "%Y-%m-%d",
+              "title": "Date (example: 2025-01-31)"
+            }
+          ],
+          "title": "Time",
+          "type": "string"
         }
+      },
+      "required": [
+        "temporal_index"
       ],
       "title": "Time",
-      "type": "string"
+      "type": "object"
     },
     "ValueGrouper": {
       "description": "Use a categorical column to group data by. If you're unsure which columns are available, run the workflow once without grouping to see the data, then configure grouping in a subsequent run.",
@@ -742,15 +750,13 @@
         "timezone"
       ]
     },
-    "Subject Group": {
-      "subject_obs": {
-        "ui:order": [
-          "subject_group_name",
-          "include_details",
-          "include_subjectsource_details",
-          "filter"
-        ]
-      }
+    "subject_obs": {
+      "ui:order": [
+        "subject_group_name",
+        "include_details",
+        "include_subjectsource_details",
+        "filter"
+      ]
     },
     "Process Observations": {
       "ui:order": [
@@ -796,7 +802,7 @@
       "workflow_details",
       "time_range",
       "er_client_name",
-      "Subject Group",
+      "subject_obs",
       "Process Observations",
       "persist_tracks",
       "Generate Maps"
