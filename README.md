@@ -8,7 +8,7 @@ This workflow allows you to download and analyze subject tracking data from Eart
 - Downloads tracking data for subjects from EarthRanger
 - Processes observation relocations to trajectory segments
 - Filters and processes observations based on your criteria
-- Exports data in multiple formats (CSV, GeoParquet, GPKG)
+- Exports data in multiple formats (CSV, GeoParquet)
 - Optionally creates visual maps showing subject movement trajectories
 
 **Who should use this:**
@@ -93,7 +93,6 @@ Choose how to save your data.
 - **Filetypes**: Select one or more output formats
   - **CSV**: Standard spreadsheet format, opens in Excel
   - **GeoParquet**: Efficient format for geospatial data
-  - **GPKG**: GeoPackage format, opens in GIS software like QGIS
   - Example: Select both `CSV` and `GeoParquet`
 
 #### 7. Skip Map Generation
@@ -225,12 +224,11 @@ After the workflow completes successfully, you'll find your outputs in the desig
 Your subject tracking data will be saved in the format(s) you selected:
 
 
-- **File formats**: CSV, GeoParquet, and/or GPKG (based on your selection)
-- **Opens in**: Microsoft Excel, Google Sheets (CSV), Python/R (GeoParquet), QGIS/ArcGIS (GPKG)
+- **File formats**: CSV and/or GeoParquet (based on your selection)
+- **Opens in**: Microsoft Excel, Google Sheets (CSV), Python/R (GeoParquet)
 - **Best for**:
   - CSV: Quick data review and analysis
   - GeoParquet: Large datasets, programmatic analysis
-  - GPKG: Spatial analysis in GIS software
 - **Contents**: All trajectory segment data in tabular format with one row per segment
   - **segment_start**: Start time of the trajectory segment
   - **timespan_seconds**: Duration of the segment in seconds
