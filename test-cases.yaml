@@ -59,7 +59,7 @@ base:
           max_zoom: 17
           min_zoom: null
     persist_tracks:
-      filetypes: ["geoparquet", "csv"]
+      filetypes: ["parquet", "csv"]
       filename_prefix: "subject_tracks"
 
 month-grouper:
@@ -100,7 +100,7 @@ month-grouper:
         max_speed_kmhr: 10.0
         min_speed_kmhr: 0.01
     persist_tracks:
-      filetypes: ["geoparquet", "csv"]
+      filetypes: ["parquet", "csv"]
       filename_prefix: "monthly_subject_tracks"
     base_map_defs:
       base_maps:
@@ -148,7 +148,7 @@ with-details:
         max_speed_kmhr: 10.0
         min_speed_kmhr: 0.01
     persist_tracks:
-      filetypes: ["geoparquet", "csv"]
+      filetypes: ["parquet", "csv"]
       filename_prefix: "subject_tracks_with_details"
     base_map_defs:
       base_maps:
@@ -183,7 +183,7 @@ with-filter:
     customize_columns:
       drop_columns: ["location", "subject__content_type", "subject__country"]
     persist_tracks:
-      filetypes: ["geoparquet", "csv"]
+      filetypes: ["parquet", "csv"]
       filename_prefix: "subject_tracks_with_filter"
     base_map_defs:
       base_maps:
@@ -260,7 +260,7 @@ no-subjectsource-details:
         max_speed_kmhr: 10.0
         min_speed_kmhr: 0.01
     persist_tracks:
-      filetypes: ["geoparquet"]
+      filetypes: ["parquet"]
       filename_prefix: "subject_tracks"
     base_map_defs:
       base_maps:

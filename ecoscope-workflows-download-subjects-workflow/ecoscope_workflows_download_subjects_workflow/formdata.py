@@ -104,8 +104,7 @@ class SqlQuery(BaseModel):
 
 class Filetype(str, Enum):
     csv = "csv"
-    gpkg = "gpkg"
-    geoparquet = "geoparquet"
+    parquet = "parquet"
 
 
 class PersistTracks(BaseModel):
@@ -113,7 +112,7 @@ class PersistTracks(BaseModel):
         extra="forbid",
     )
     filetypes: Optional[List[Filetype]] = Field(
-        ["geoparquet"], description="The output format", title="Filetypes"
+        ["parquet"], description="The output format", title="Filetypes"
     )
     filename_prefix: Optional[str] = Field(
         "subject_tracks",

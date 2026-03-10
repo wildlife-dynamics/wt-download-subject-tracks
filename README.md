@@ -8,7 +8,7 @@ This workflow allows you to download and analyze subject tracking data from Eart
 - Downloads tracking data for subjects from EarthRanger
 - Processes observation relocations to trajectory segments
 - Filters and processes observations based on your criteria
-- Exports data in multiple formats (CSV, GeoParquet, GPKG)
+- Exports data in multiple formats (CSV, Parquet)
 - Optionally creates visual maps showing subject movement trajectories
 
 **Who should use this:**
@@ -92,9 +92,8 @@ Choose how to save your data.
 
 - **Filetypes**: Select one or more output formats
   - **CSV**: Standard spreadsheet format, opens in Excel
-  - **GeoParquet**: Efficient format for geospatial data
-  - **GPKG**: GeoPackage format, opens in GIS software like QGIS
-  - Example: Select both `CSV` and `GeoParquet`
+  - **Parquet**: Efficient format for geospatial data
+  - Example: Select both `CSV` and `Parquet`
 
 #### 7. Skip Map Generation
 Control whether to create map visualizations.
@@ -225,12 +224,11 @@ After the workflow completes successfully, you'll find your outputs in the desig
 Your subject tracking data will be saved in the format(s) you selected:
 
 
-- **File formats**: CSV, GeoParquet, and/or GPKG (based on your selection)
-- **Opens in**: Microsoft Excel, Google Sheets (CSV), Python/R (GeoParquet), QGIS/ArcGIS (GPKG)
+- **File formats**: CSV and/or Parquet (based on your selection)
+- **Opens in**: Microsoft Excel, Google Sheets (CSV), Python/R (Parquet)
 - **Best for**:
   - CSV: Quick data review and analysis
-  - GeoParquet: Large datasets, programmatic analysis
-  - GPKG: Spatial analysis in GIS software
+  - Parquet: Large datasets, programmatic analysis
 - **Contents**: All trajectory segment data in tabular format with one row per segment
   - **segment_start**: Start time of the trajectory segment
   - **timespan_seconds**: Duration of the segment in seconds
@@ -299,11 +297,11 @@ Here are some typical scenarios and how to configure the workflow for each:
 - **Subject Group Name**: `"Subjects"`
 - **Group Data**:
   - Select `"%B"` (Month name: January, February, etc.)
-- **Filetypes**: Select `CSV` and `GeoParquet`
+- **Filetypes**: Select `CSV` and `Parquet`
 - **Skip Map Generation**: Unchecked
 
 **Result**:
-- 12 separate CSV and GeoParquet files, one for each month
+- 12 separate CSV and Parquet files, one for each month
 - Interactive maps for each month showing subject trajectories
 
 ---
@@ -338,11 +336,11 @@ Here are some typical scenarios and how to configure the workflow for each:
   - Since: `2015-01-01T00:00:00`
   - Until: `2015-12-31T23:59:59`
 - **Subject Group Name**: Your subject group
-- **Filetypes**: Select `GeoParquet` (most efficient for large datasets)
+- **Filetypes**: Select `Parquet` (most efficient for large datasets)
 - **Skip Map Generation**: Checked
 
 **Result**:
-- Efficient GeoParquet file with full year of tracking data
+- Efficient Parquet file with full year of tracking data
 - Faster processing without map generation overhead
 
 ## Troubleshooting
@@ -376,7 +374,7 @@ Here are some typical scenarios and how to configure the workflow for each:
 - Enable "Skip Map Generation" for large datasets
 - Reduce the date range to smaller time periods
 - Process data in smaller batches (by week or month instead of year)
-- Consider using only GeoParquet format (most efficient) instead of multiple formats
+- Consider using only Parquet format (most efficient) instead of multiple formats
 - The first run may take longer as the environment gets warmed up. The following ones should be faster.
 
 #### Authentication errors
