@@ -7,10 +7,12 @@ requirements:
     version: ">=0.22.16, <0.23.0"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-custom
-    version: ">=0.0.35, <0.1.0"
+    version: ">=0.0.36, <0.1.0"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 rjsf-overrides:
   properties:
+    Get Subject Group Observations from EarthRanger.properties.subject_obs.properties.subject_group_name.description: >-
+      Specify the subject group to download observations for. Enter the exact "Subject Group" name as it appears in EarthRanger (e.g. "Ecoscope"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Subjects → Subject Groups
     Generate Maps.properties.skip_map_generation.properties.skip.description: >-
       Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
     Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
@@ -25,11 +27,20 @@ rjsf-overrides:
       - {"$ref": "#/$defs/TemporalGrouper"}
 
   $defs:
-    ValueGrouper: {
-      description: "Use a categorical column to group data by. If you're unsure which columns are available, run the workflow once without grouping to see the data, then configure grouping in a subsequent run.",
-      title: "Category",
-      "type": "string"
-    }
+    ValueGrouper:
+      title: "Category"
+      type: "object"
+      properties:
+        index_name:
+          title: "Index Name"
+          type: "string"
+          oneOf:
+            - const: "subject__name"
+              title: "Subject Name"
+            - const: "subject__subtype"
+              title: "Subject Subtype"
+            - const: "subject__sex"
+              title: "Subject Sex"
 
   uiSchema:
     Process Observations.filter_obs.filter_point_coords.items.ui:options.label: false

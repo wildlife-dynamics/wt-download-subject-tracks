@@ -5,9 +5,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Literal, Optional, Union
+from typing import Any, List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, confloat, constr
+from pydantic import BaseModel, ConfigDict, Field, confloat, constr
 
 
 class WorkflowDetails(BaseModel):
@@ -305,6 +305,17 @@ class GenerateMaps(BaseModel):
     base_map_defs: Optional[BaseMapDefs] = Field(None, title=" ")
 
 
+class SubjectObs1(BaseModel):
+    subject_group_name: Optional[Any] = Field(
+        None,
+        description='Specify the subject group to download observations for. Enter the exact "Subject Group" name as it appears in EarthRanger (e.g. "Ecoscope"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Subjects → Subject Groups',
+    )
+
+
+class GetSubjectGroupObservationsFromEarthRanger(BaseModel):
+    subject_obs: Optional[SubjectObs1] = None
+
+
 class TimezoneInfo(BaseModel):
     label: str = Field(..., title="Label")
     tzCode: str = Field(..., title="Tzcode")
@@ -357,12 +368,8 @@ class TemporalGrouper(BaseModel):
     temporal_index: str = Field(..., title="Time")
 
 
-class ValueGrouper(RootModel[str]):
-    root: str = Field(
-        ...,
-        description="Use a categorical column to group data by. If you're unsure which columns are available, run the workflow once without grouping to see the data, then configure grouping in a subsequent run.",
-        title="Category",
-    )
+class ValueGrouper(BaseModel):
+    index_name: Optional[str] = Field(None, title="Index Name")
 
 
 class TimeRange(BaseModel):
@@ -471,3 +478,6 @@ class FormData(BaseModel):
         alias="Generate Maps",
         description="Generate maps to visualize the subject trajectories.",
     )
+    Get_Subject_Group_Observations_from_EarthRanger: Optional[
+        GetSubjectGroupObservationsFromEarthRanger
+    ] = Field(None, alias="Get Subject Group Observations from EarthRanger")
