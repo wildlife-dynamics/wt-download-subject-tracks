@@ -194,6 +194,87 @@ with-filter:
           max_zoom: 17
           min_zoom: null
 
+value-grouper:
+  name: Value Grouper by Subject Name
+  mock_io: true
+  params:
+    workflow_details:
+      name: "Subject Tracking Dashboard"
+      description: "Visualize subject trajectories grouped by subject name."
+    er_client_name:
+      data_source:
+        name: "mep_dev"
+    time_range:
+      since: "2025-12-21T00:00:00Z"
+      until: "2025-12-23T23:59:59Z"
+      timezone:
+        label: "Africa/Nairobi (UTC+03:00)"
+        tzCode: "Africa/Nairobi"
+        name: "(UTC+03:00) Nairobi"
+        utc: "+03:00"
+    subject_obs:
+      subject_group_name: "Ecoscope"
+    subject_traj:
+      trajectory_segment_filter:
+        min_length_meters: 0.001
+        max_length_meters: 10000.0
+        max_time_secs: 21600.0
+        min_time_secs: 1.0
+        max_speed_kmhr: 10.0
+        min_speed_kmhr: 0.01
+    groupers:
+      groupers:
+        - index_name: "subject__name"
+    persist_tracks:
+      filetypes: ["csv"]
+      filename_prefix: "subject_tracks_by_name"
+    base_map_defs:
+      base_maps:
+        - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+          opacity: 1.0
+
+sql-filter:
+  name: SQL Filter Subjects by Speed
+  mock_io: true
+  params:
+    workflow_details:
+      name: "Subject Tracking Dashboard"
+      description: "Filter subject trajectories by speed using SQL."
+    er_client_name:
+      data_source:
+        name: "mep_dev"
+    time_range:
+      since: "2015-01-01T00:00:00Z"
+      until: "2015-01-07T23:59:59Z"
+      timezone:
+        label: "Africa/Nairobi (UTC+03:00)"
+        tzCode: "Africa/Nairobi"
+        name: "(UTC+03:00) Nairobi"
+        utc: "+03:00"
+    subject_obs:
+      subject_group_name: "Ecoscope"
+    subject_traj:
+      trajectory_segment_filter:
+        min_length_meters: 0.001
+        max_length_meters: 10000.0
+        max_time_secs: 21600.0
+        min_time_secs: 1.0
+        max_speed_kmhr: 10.0
+        min_speed_kmhr: 0.01
+    sql_query:
+      query: >-
+        SELECT * FROM df WHERE speed_kmhr > 1.0
+      columns: ["segment_start", "segment_end", "timespan_seconds", "dist_meters", "speed_kmhr", "heading", "geometry", "subject__name", "subject__sex", "subject__id", "groupby_col"]
+    groupers:
+      groupers: []
+    persist_tracks:
+      filetypes: ["csv"]
+      filename_prefix: "subject_tracks_fast"
+    base_map_defs:
+      base_maps:
+        - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+          opacity: 1.0
+
 skip-maps:
   name: Test Skipping Map Generation
   mock_io: true

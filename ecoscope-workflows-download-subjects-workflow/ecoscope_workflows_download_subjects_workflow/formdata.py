@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel, confloat, constr
+from pydantic import BaseModel, ConfigDict, Field, confloat, constr
 
 
 class WorkflowDetails(BaseModel):
@@ -32,7 +32,7 @@ class SubjectObs(BaseModel):
     )
     subject_group_name: str = Field(
         ...,
-        description="⚠️ The use of a group with mixed subtypes could lead to unexpected results",
+        description='Specify the subject group to download observations for. Enter the exact "Subject Group" name as it appears in EarthRanger (e.g. "Ecoscope"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations → Subject groups',
         title="Subject Group Name",
     )
     include_details: Optional[bool] = Field(
@@ -357,12 +357,8 @@ class TemporalGrouper(BaseModel):
     temporal_index: str = Field(..., title="Time")
 
 
-class ValueGrouper(RootModel[str]):
-    root: str = Field(
-        ...,
-        description="Use a categorical column to group data by. If you're unsure which columns are available, run the workflow once without grouping to see the data, then configure grouping in a subsequent run.",
-        title="Category",
-    )
+class ValueGrouper(BaseModel):
+    index_name: Optional[str] = Field(None, title="Index Name")
 
 
 class TimeRange(BaseModel):

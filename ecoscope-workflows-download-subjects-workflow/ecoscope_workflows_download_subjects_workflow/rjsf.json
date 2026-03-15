@@ -74,7 +74,7 @@
         "subject_group_name": {
           "title": "Subject Group Name",
           "type": "string",
-          "description": "\u26a0\ufe0f The use of a group with mixed subtypes could lead to unexpected results"
+          "description": "Specify the subject group to download observations for. Enter the exact \"Subject Group\" name as it appears in EarthRanger (e.g. \"Ecoscope\"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations \u2192 Subject groups"
         },
         "include_details": {
           "default": false,
@@ -730,9 +730,28 @@
       "type": "object"
     },
     "ValueGrouper": {
-      "description": "Use a categorical column to group data by. If you're unsure which columns are available, run the workflow once without grouping to see the data, then configure grouping in a subsequent run.",
       "title": "Category",
-      "type": "string"
+      "type": "object",
+      "properties": {
+        "index_name": {
+          "title": "Index Name",
+          "type": "string",
+          "oneOf": [
+            {
+              "const": "subject__name",
+              "title": "Subject Name"
+            },
+            {
+              "const": "subject__subtype",
+              "title": "Subject Subtype"
+            },
+            {
+              "const": "subject__sex",
+              "title": "Subject Sex"
+            }
+          ]
+        }
+      }
     }
   },
   "uiSchema": {
