@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, List, Literal, Optional, Union
+from typing import List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, confloat, constr
 
@@ -32,7 +32,7 @@ class SubjectObs(BaseModel):
     )
     subject_group_name: str = Field(
         ...,
-        description="⚠️ The use of a group with mixed subtypes could lead to unexpected results",
+        description='Specify the subject group to download observations for. Enter the exact "Subject Group" name as it appears in EarthRanger (e.g. "Ecoscope"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations → Subject groups',
         title="Subject Group Name",
     )
     include_details: Optional[bool] = Field(
@@ -305,17 +305,6 @@ class GenerateMaps(BaseModel):
     base_map_defs: Optional[BaseMapDefs] = Field(None, title=" ")
 
 
-class SubjectObs1(BaseModel):
-    subject_group_name: Optional[Any] = Field(
-        None,
-        description='Specify the subject group to download observations for. Enter the exact "Subject Group" name as it appears in EarthRanger (e.g. "Ecoscope"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Subjects → Subject Groups',
-    )
-
-
-class GetSubjectGroupObservationsFromEarthRanger(BaseModel):
-    subject_obs: Optional[SubjectObs1] = None
-
-
 class TimezoneInfo(BaseModel):
     label: str = Field(..., title="Label")
     tzCode: str = Field(..., title="Tzcode")
@@ -478,6 +467,3 @@ class FormData(BaseModel):
         alias="Generate Maps",
         description="Generate maps to visualize the subject trajectories.",
     )
-    Get_Subject_Group_Observations_from_EarthRanger: Optional[
-        GetSubjectGroupObservationsFromEarthRanger
-    ] = Field(None, alias="Get Subject Group Observations from EarthRanger")

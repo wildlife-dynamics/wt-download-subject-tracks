@@ -74,7 +74,7 @@
         "subject_group_name": {
           "title": "Subject Group Name",
           "type": "string",
-          "description": "\u26a0\ufe0f The use of a group with mixed subtypes could lead to unexpected results"
+          "description": "Specify the subject group to download observations for. Enter the exact \"Subject Group\" name as it appears in EarthRanger (e.g. \"Ecoscope\"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations \u2192 Subject groups"
         },
         "include_details": {
           "default": false,
@@ -525,17 +525,6 @@
           "type": "object",
           "required": [],
           "title": " "
-        }
-      }
-    },
-    "Get Subject Group Observations from EarthRanger": {
-      "properties": {
-        "subject_obs": {
-          "properties": {
-            "subject_group_name": {
-              "description": "Specify the subject group to download observations for. Enter the exact \"Subject Group\" name as it appears in EarthRanger (e.g. \"Ecoscope\"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Subjects \u2192 Subject Groups"
-            }
-          }
         }
       }
     }
