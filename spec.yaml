@@ -19,12 +19,12 @@ rjsf-overrides:
     Generate Maps.properties.skip_map_generation.properties.skip.description: >-
       Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
     Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
-    skip_relocation_persist.properties.skip.default: true
-    skip_relocation_persist.properties.skip.description: >-
+    Persist Relocations.properties.skip_relocation_persist.properties.skip.default: true
+    Persist Relocations.properties.skip_relocation_persist.properties.skip.description: >-
       Skip persisting relocation data. Uncheck to save raw relocations (before trajectory conversion) as files.
-    persist_relocations.properties.filename_prefix.default: "relocations"
-    persist_relocations.properties.filetypes.default: ["parquet"]
-    persist_relocations.properties.filetypes.items.enum: ["csv", "parquet"]
+    Persist Relocations.properties.persist_relocations.properties.filename_prefix.default: "relocations"
+    Persist Relocations.properties.persist_relocations.properties.filetypes.default: ["parquet"]
+    Persist Relocations.properties.persist_relocations.properties.filetypes.items.enum: ["csv", "parquet"]
     persist_tracks.properties.filename_prefix.default: "subject_tracks"
     persist_tracks.properties.filetypes.default: ["parquet"]
     persist_tracks.properties.filetypes.items.enum: ["csv", "parquet"]
@@ -189,19 +189,24 @@ workflow:
           df: ${{ workflow.obs_add_temporal_index.return }}
           groupers: ${{ workflow.groupers.return }}
 
-  - name: Skip Relocation Persistence
-    id: skip_relocation_persist
-    task: maybe_skip_df
-    partial:
-      df: ${{ workflow.filter_obs.return }}
+  - title: Persist Relocations
+    type: task-group
+    description: >-
+      Optionally persist raw relocation data (before trajectory conversion) as files.
+    tasks:
+      - name: Skip Relocation Persistence
+        id: skip_relocation_persist
+        task: maybe_skip_df
+        partial:
+          df: ${{ workflow.filter_obs.return }}
 
-  - name: Persist Relocations
-    id: persist_relocations
-    task: persist_df_wrapper
-    partial:
-      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
-      sanitize: true
-      df: ${{ workflow.skip_relocation_persist.return }}
+      - name: " "
+        id: persist_relocations
+        task: persist_df_wrapper
+        partial:
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          sanitize: true
+          df: ${{ workflow.skip_relocation_persist.return }}
 
   - name: Persist Subject Trajectories
     id: persist_tracks

@@ -451,9 +451,7 @@ class Params(BaseModel):
     skip_relocation_persist: Optional[SkipRelocationPersist] = Field(
         None, title="Skip Relocation Persistence"
     )
-    persist_relocations: Optional[PersistRelocations] = Field(
-        None, title="Persist Relocations"
-    )
+    persist_relocations: Optional[PersistRelocations] = Field(None, title=" ")
     persist_tracks: Optional[PersistTracks] = Field(
         None, title="Persist Subject Trajectories"
     )

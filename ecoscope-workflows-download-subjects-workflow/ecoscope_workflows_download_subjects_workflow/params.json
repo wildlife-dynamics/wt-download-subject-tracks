@@ -287,7 +287,7 @@
       },
       "required": [],
       "type": "object",
-      "title": "Persist Relocations"
+      "title": " "
     },
     "persist_tracks": {
       "additionalProperties": false,

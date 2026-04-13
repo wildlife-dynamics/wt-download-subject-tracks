@@ -269,50 +269,57 @@
         }
       }
     },
-    "skip_relocation_persist": {
-      "additionalProperties": false,
-      "properties": {
-        "skip": {
-          "default": true,
-          "title": "Skip",
-          "type": "boolean",
-          "description": "Skip persisting relocation data. Uncheck to save raw relocations (before trajectory conversion) as files."
-        }
-      },
-      "required": [],
+    "Persist Relocations": {
       "type": "object",
-      "title": "Skip Relocation Persistence"
-    },
-    "persist_relocations": {
-      "additionalProperties": false,
+      "description": "Optionally persist raw relocation data (before trajectory conversion) as files.",
+      "ecoscope:task_group": true,
       "properties": {
-        "filetypes": {
-          "default": [
-            "parquet"
-          ],
-          "items": {
-            "enum": [
-              "csv",
-              "parquet"
-            ],
-            "type": "string"
+        "skip_relocation_persist": {
+          "additionalProperties": false,
+          "properties": {
+            "skip": {
+              "default": true,
+              "title": "Skip",
+              "type": "boolean",
+              "description": "Skip persisting relocation data. Uncheck to save raw relocations (before trajectory conversion) as files."
+            }
           },
-          "title": "Filetypes",
-          "type": "array",
-          "description": "The output format",
-          "uniqueItems": true
+          "required": [],
+          "type": "object",
+          "title": "Skip Relocation Persistence"
         },
-        "filename_prefix": {
-          "default": "relocations",
-          "title": "Filename Prefix",
-          "type": "string",
-          "description": "            Optional filename prefix to persist text to within the `root_path`.\n            We will always add a suffix based on the dataframe content hash to avoid duplicates.\n            ",
-          "ecoscope:advanced": true
+        "persist_relocations": {
+          "additionalProperties": false,
+          "properties": {
+            "filetypes": {
+              "default": [
+                "parquet"
+              ],
+              "items": {
+                "enum": [
+                  "csv",
+                  "parquet"
+                ],
+                "type": "string"
+              },
+              "title": "Filetypes",
+              "type": "array",
+              "description": "The output format",
+              "uniqueItems": true
+            },
+            "filename_prefix": {
+              "default": "relocations",
+              "title": "Filename Prefix",
+              "type": "string",
+              "description": "            Optional filename prefix to persist text to within the `root_path`.\n            We will always add a suffix based on the dataframe content hash to avoid duplicates.\n            ",
+              "ecoscope:advanced": true
+            }
+          },
+          "required": [],
+          "type": "object",
+          "title": " "
         }
-      },
-      "required": [],
-      "type": "object",
-      "title": "Persist Relocations"
+      }
     },
     "persist_tracks": {
       "additionalProperties": false,
@@ -849,11 +856,17 @@
         ]
       }
     },
-    "persist_relocations": {
+    "Persist Relocations": {
       "ui:order": [
-        "filetypes",
-        "filename_prefix"
-      ]
+        "skip_relocation_persist",
+        "persist_relocations"
+      ],
+      "persist_relocations": {
+        "ui:order": [
+          "filetypes",
+          "filename_prefix"
+        ]
+      }
     },
     "persist_tracks": {
       "ui:order": [
@@ -873,8 +886,7 @@
       "er_client_name",
       "subject_obs",
       "Process Observations",
-      "skip_relocation_persist",
-      "persist_relocations",
+      "Persist Relocations",
       "persist_tracks",
       "Generate Maps"
     ],
