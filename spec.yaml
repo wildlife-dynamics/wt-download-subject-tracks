@@ -207,6 +207,9 @@ workflow:
           root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
           sanitize: true
           df: ${{ workflow.skip_relocation_persist.return }}
+        skipif:
+          conditions:
+            - never
 
   - name: Persist Subject Trajectories
     id: persist_tracks
