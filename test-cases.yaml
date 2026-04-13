@@ -58,6 +58,11 @@ base:
           opacity: 0.5
           max_zoom: 17
           min_zoom: null
+    skip_relocation_persist:
+      skip: false
+    persist_relocations:
+      filetypes: ["parquet"]
+      filename_prefix: "relocations"
     persist_tracks:
       filetypes: ["parquet", "csv"]
       filename_prefix: "subject_tracks"

@@ -413,6 +413,43 @@ def main(params: Params):
         .call()
     )
 
+    skip_relocation_persist = (
+        maybe_skip_df.validate()
+        .set_task_instance_id("skip_relocation_persist")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(df=filter_obs, **(params_dict.get("skip_relocation_persist") or {}))
+        .call()
+    )
+
+    persist_relocations = (
+        persist_df_wrapper.validate()
+        .set_task_instance_id("persist_relocations")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            sanitize=True,
+            df=skip_relocation_persist,
+            **(params_dict.get("persist_relocations") or {}),
+        )
+        .call()
+    )
+
     persist_tracks = (
         persist_df_wrapper.validate()
         .set_task_instance_id("persist_tracks")
