@@ -209,7 +209,7 @@ workflow:
           df: ${{ workflow.skip_relocation_persist.return }}
         skipif:
           conditions:
-            - never
+            - any_dependency_skipped
 
   - name: Persist Subject Trajectories
     id: persist_tracks

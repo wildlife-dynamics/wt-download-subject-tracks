@@ -493,7 +493,7 @@ def main(params: Params):
             .with_tracing()
             .skipif(
                 conditions=[
-                    never,
+                    any_dependency_skipped,
                 ],
                 unpack_depth=1,
             )

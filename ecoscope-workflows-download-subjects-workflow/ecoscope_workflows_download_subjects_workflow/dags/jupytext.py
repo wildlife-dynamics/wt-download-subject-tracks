@@ -678,7 +678,7 @@ persist_relocations = (
     .with_tracing()
     .skipif(
         conditions=[
-            never,
+            any_dependency_skipped,
         ],
         unpack_depth=1,
     )
