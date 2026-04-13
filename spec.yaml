@@ -199,6 +199,9 @@ workflow:
         task: maybe_skip_df
         partial:
           df: ${{ workflow.filter_obs.return }}
+        skipif:
+          conditions:
+            - never
 
       - name: " "
         id: persist_relocations
