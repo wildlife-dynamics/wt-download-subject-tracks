@@ -199,9 +199,6 @@ workflow:
         task: maybe_skip_df
         partial:
           df: ${{ workflow.filter_obs.return }}
-        skipif:
-          conditions:
-            - never
 
       - name: " "
         id: persist_relocations
@@ -210,9 +207,6 @@ workflow:
           root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
           sanitize: true
           df: ${{ workflow.skip_relocation_persist.return }}
-        skipif:
-          conditions:
-            - any_dependency_skipped
 
   - name: Persist Subject Trajectories
     id: persist_tracks
