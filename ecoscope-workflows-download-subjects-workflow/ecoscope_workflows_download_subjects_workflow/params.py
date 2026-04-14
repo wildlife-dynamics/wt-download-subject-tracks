@@ -77,11 +77,36 @@ class SqlQuery(BaseModel):
     )
 
 
+class SkipRelocationPersist(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    skip: Optional[bool] = Field(
+        False,
+        description="Skip the following tasks if True, returning a sentinel value.",
+        title="Skip",
+    )
+
+
 class Filetype(str, Enum):
     csv = "csv"
     gpkg = "gpkg"
     geoparquet = "geoparquet"
     parquet = "parquet"
+
+
+class PersistRelocations(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    filetypes: Optional[List[Filetype]] = Field(
+        ["csv"], description="The output format", title="Filetypes"
+    )
+    filename_prefix: Optional[str] = Field(
+        None,
+        description="            Optional filename prefix to persist text to within the `root_path`.\n            We will always add a suffix based on the dataframe content hash to avoid duplicates.\n            ",
+        title="Filename Prefix",
+    )
 
 
 class PersistTracks(BaseModel):
@@ -423,6 +448,10 @@ class Params(BaseModel):
     customize_columns: Optional[CustomizeColumns] = Field(None, title="Process Columns")
     sql_query: Optional[SqlQuery] = Field(None, title="Apply SQL Query")
     groupers: Optional[Groupers] = Field(None, title="Group Data")
+    skip_relocation_persist: Optional[SkipRelocationPersist] = Field(
+        None, title="Skip Relocation Persistence"
+    )
+    persist_relocations: Optional[PersistRelocations] = Field(None, title=" ")
     persist_tracks: Optional[PersistTracks] = Field(
         None, title="Persist Subject Trajectories"
     )

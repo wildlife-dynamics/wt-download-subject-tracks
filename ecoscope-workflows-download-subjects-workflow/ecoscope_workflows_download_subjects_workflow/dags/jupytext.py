@@ -627,6 +627,73 @@ split_traj_groups = (
 
 
 # %% [markdown]
+# ## Skip Relocation Persistence
+
+# %%
+# parameters
+
+skip_relocation_persist_params = dict(
+    skip=...,
+)
+
+# %%
+# call the task
+
+
+skip_relocation_persist = (
+    maybe_skip_df.set_task_instance_id("skip_relocation_persist")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(df=filter_obs, **skip_relocation_persist_params)
+    .call()
+)
+
+
+# %% [markdown]
+# ##
+
+# %%
+# parameters
+
+persist_relocations_params = dict(
+    filename=...,
+    filetypes=...,
+    filename_prefix=...,
+)
+
+# %%
+# call the task
+
+
+persist_relocations = (
+    persist_df_wrapper.set_task_instance_id("persist_relocations")
+    .handle_errors()
+    .with_tracing()
+    .skipif(
+        conditions=[
+            any_is_empty_df,
+            any_dependency_skipped,
+        ],
+        unpack_depth=1,
+    )
+    .partial(
+        root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+        sanitize=True,
+        df=skip_relocation_persist,
+        **persist_relocations_params,
+    )
+    .call()
+)
+
+
+# %% [markdown]
 # ## Persist Subject Trajectories
 
 # %%

@@ -1,13 +1,16 @@
 id: download_subjects
 requirements:
   - name: ecoscope-workflows-core
-    version: ">=0.22.16, <0.23.0"
+    version: ">=0.22.18, <0.23.0"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-ecoscope
-    version: ">=0.22.16, <0.23.0"
+    version: ">=0.22.18, <0.23.0"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-custom
-    version: ">=0.0.36, <0.1.0"
+    version: ">=0.0.45, <0.1.0"
+    channel: https://repo.prefix.dev/ecoscope-workflows-custom/
+  - name: pydeck
+    version: "0.0.2"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 rjsf-overrides:
   properties:
@@ -16,6 +19,12 @@ rjsf-overrides:
     Generate Maps.properties.skip_map_generation.properties.skip.description: >-
       Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
     Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
+    Persist Relocations.properties.skip_relocation_persist.properties.skip.default: true
+    Persist Relocations.properties.skip_relocation_persist.properties.skip.description: >-
+      Skip persisting relocation data. Uncheck to save raw relocations (before trajectory conversion) as files.
+    Persist Relocations.properties.persist_relocations.properties.filename_prefix.default: "relocations"
+    Persist Relocations.properties.persist_relocations.properties.filetypes.default: ["parquet"]
+    Persist Relocations.properties.persist_relocations.properties.filetypes.items.enum: ["csv", "parquet"]
     persist_tracks.properties.filename_prefix.default: "subject_tracks"
     persist_tracks.properties.filetypes.default: ["parquet"]
     persist_tracks.properties.filetypes.items.enum: ["csv", "parquet"]
@@ -179,6 +188,25 @@ workflow:
         partial:
           df: ${{ workflow.obs_add_temporal_index.return }}
           groupers: ${{ workflow.groupers.return }}
+
+  - title: Persist Relocations
+    type: task-group
+    description: >-
+      Optionally persist raw relocation data (before trajectory conversion) as files.
+    tasks:
+      - name: Skip Relocation Persistence
+        id: skip_relocation_persist
+        task: maybe_skip_df
+        partial:
+          df: ${{ workflow.filter_obs.return }}
+
+      - name: " "
+        id: persist_relocations
+        task: persist_df_wrapper
+        partial:
+          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          sanitize: true
+          df: ${{ workflow.skip_relocation_persist.return }}
 
   - name: Persist Subject Trajectories
     id: persist_tracks

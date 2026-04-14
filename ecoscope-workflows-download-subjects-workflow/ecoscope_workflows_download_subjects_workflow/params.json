@@ -242,6 +242,53 @@
       "required": [],
       "title": "Group Data"
     },
+    "skip_relocation_persist": {
+      "additionalProperties": false,
+      "properties": {
+        "skip": {
+          "default": false,
+          "title": "Skip",
+          "type": "boolean",
+          "description": "Skip the following tasks if True, returning a sentinel value."
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": "Skip Relocation Persistence"
+    },
+    "persist_relocations": {
+      "additionalProperties": false,
+      "properties": {
+        "filetypes": {
+          "default": [
+            "csv"
+          ],
+          "items": {
+            "enum": [
+              "csv",
+              "gpkg",
+              "geoparquet",
+              "parquet"
+            ],
+            "type": "string"
+          },
+          "title": "Filetypes",
+          "type": "array",
+          "description": "The output format",
+          "uniqueItems": true
+        },
+        "filename_prefix": {
+          "default": null,
+          "title": "Filename Prefix",
+          "type": "string",
+          "description": "            Optional filename prefix to persist text to within the `root_path`.\n            We will always add a suffix based on the dataframe content hash to avoid duplicates.\n            ",
+          "ecoscope:advanced": true
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": " "
+    },
     "persist_tracks": {
       "additionalProperties": false,
       "properties": {
@@ -746,6 +793,12 @@
         "columns"
       ]
     },
+    "persist_relocations": {
+      "ui:order": [
+        "filetypes",
+        "filename_prefix"
+      ]
+    },
     "persist_tracks": {
       "ui:order": [
         "filetypes",
@@ -762,6 +815,8 @@
       "customize_columns",
       "sql_query",
       "groupers",
+      "skip_relocation_persist",
+      "persist_relocations",
       "persist_tracks",
       "skip_map_generation",
       "base_map_defs"

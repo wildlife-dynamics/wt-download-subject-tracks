@@ -102,9 +102,41 @@ class SqlQuery(BaseModel):
     )
 
 
+class SkipRelocationPersist(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    skip: Optional[bool] = Field(
+        True,
+        description="Skip persisting relocation data. Uncheck to save raw relocations (before trajectory conversion) as files.",
+        title="Skip",
+    )
+
+
 class Filetype(str, Enum):
     csv = "csv"
     parquet = "parquet"
+
+
+class PersistRelocations1(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    filetypes: Optional[List[Filetype]] = Field(
+        ["parquet"], description="The output format", title="Filetypes"
+    )
+    filename_prefix: Optional[str] = Field(
+        "relocations",
+        description="            Optional filename prefix to persist text to within the `root_path`.\n            We will always add a suffix based on the dataframe content hash to avoid duplicates.\n            ",
+        title="Filename Prefix",
+    )
+
+
+class PersistRelocations(BaseModel):
+    skip_relocation_persist: Optional[SkipRelocationPersist] = Field(
+        None, title="Skip Relocation Persistence"
+    )
+    persist_relocations: Optional[PersistRelocations1] = Field(None, title=" ")
 
 
 class PersistTracks(BaseModel):
@@ -458,6 +490,11 @@ class FormData(BaseModel):
         None,
         alias="Process Observations",
         description="Process observations by applying filters, SQL queries, etc. Note that the data here includes all the columns from the previous steps and the normalized subject/observation details.",
+    )
+    Persist_Relocations: Optional[PersistRelocations] = Field(
+        None,
+        alias="Persist Relocations",
+        description="Optionally persist raw relocation data (before trajectory conversion) as files.",
     )
     persist_tracks: Optional[PersistTracks] = Field(
         None, title="Persist Subject Trajectories"

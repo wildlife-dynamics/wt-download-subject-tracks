@@ -107,6 +107,8 @@ def main(params: Params):
         "groupers": [],
         "obs_add_temporal_index": ["sql_query", "groupers"],
         "split_traj_groups": ["obs_add_temporal_index", "groupers"],
+        "skip_relocation_persist": ["filter_obs"],
+        "persist_relocations": ["skip_relocation_persist"],
         "persist_tracks": ["split_traj_groups"],
         "skip_map_generation": ["split_traj_groups"],
         "set_traj_map_title": [],
@@ -463,6 +465,46 @@ def main(params: Params):
                 "groupers": DependsOn("groupers"),
             }
             | (params_dict.get("split_traj_groups") or {}),
+            method="call",
+        ),
+        "skip_relocation_persist": Node(
+            async_task=maybe_skip_df.validate()
+            .set_task_instance_id("skip_relocation_persist")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial={
+                "df": DependsOn("filter_obs"),
+            }
+            | (params_dict.get("skip_relocation_persist") or {}),
+            method="call",
+        ),
+        "persist_relocations": Node(
+            async_task=persist_df_wrapper.validate()
+            .set_task_instance_id("persist_relocations")
+            .handle_errors()
+            .with_tracing()
+            .skipif(
+                conditions=[
+                    any_is_empty_df,
+                    any_dependency_skipped,
+                ],
+                unpack_depth=1,
+            )
+            .set_executor("lithops"),
+            partial={
+                "root_path": os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+                "sanitize": True,
+                "df": DependsOn("skip_relocation_persist"),
+            }
+            | (params_dict.get("persist_relocations") or {}),
             method="call",
         ),
         "persist_tracks": Node(
