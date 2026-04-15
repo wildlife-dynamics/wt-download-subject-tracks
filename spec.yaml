@@ -1,16 +1,10 @@
 id: download_subjects
 requirements:
-  - name: ecoscope-workflows-core
-    version: ">=0.22.18, <0.23.0"
-    channel: https://repo.prefix.dev/ecoscope-workflows/
-  - name: ecoscope-workflows-ext-ecoscope
-    version: ">=0.22.18, <0.23.0"
+  - name: ecoscope-platform
+    version: "2.11.6"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-custom
-    version: ">=0.0.45, <0.1.0"
-    channel: https://repo.prefix.dev/ecoscope-workflows-custom/
-  - name: pydeck
-    version: "0.0.2"
+    version: "0.1.0rc2"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
 rjsf-overrides:
   properties:

@@ -42,14 +42,6 @@ base:
       subject_group_name: "Ecoscope"
       include_details: true
       include_subjectsource_details: true
-    subject_traj:
-      trajectory_segment_filter:
-        min_length_meters: 0.001
-        max_length_meters: 10000.0
-        max_time_secs: 21600.0
-        min_time_secs: 1.0
-        max_speed_kmhr: 10.0
-        min_speed_kmhr: 0.01
     base_map_defs:
       base_maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
