@@ -204,17 +204,19 @@ workflow:
 
       - name: " "
         id: persist_relocations
-        task: persist_df_wrapper
+        task: persist_df_for_results_download
         partial:
           root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
           sanitize: true
-          df: ${{ workflow.skip_relocation_persist.return }}
+          df_or_grouped_dfs: ${{ workflow.skip_relocation_persist.return }}
+          groupers: ${{ workflow.groupers.return }}
+          reference_keys: ${{ workflow.split_traj_groups.return }}
 
   - name: Persist Subject Trajectories
     id: persist_tracks
     task: persist_df_for_results_download
     partial:
-      iterables: ${{ workflow.split_traj_groups.return }}
+      df_or_grouped_dfs: ${{ workflow.split_traj_groups.return }}
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       sanitize: true
     skipif:
