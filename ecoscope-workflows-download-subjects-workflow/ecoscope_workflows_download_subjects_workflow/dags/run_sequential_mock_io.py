@@ -68,7 +68,7 @@ from ecoscope.platform.tasks.warning import (
     mixed_subtype_warning as mixed_subtype_warning,
 )
 from ecoscope_workflows_ext_custom.tasks.io import (
-    persist_df_for_results_download as persist_df_for_results_download,
+    persist_grouped_dfs_for_results_download as persist_grouped_dfs_for_results_download,
 )
 from ecoscope_workflows_ext_custom.tasks.skip import maybe_skip_df as maybe_skip_df
 from ecoscope_workflows_ext_custom.tasks.transformation import (
@@ -378,10 +378,55 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
-    obs_add_temporal_index = (
+    relocs_add_temporal_index = (
         task(add_temporal_index)
         .validate()
-        .set_task_instance_id("obs_add_temporal_index")
+        .set_task_instance_id("relocs_add_temporal_index")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=filter_obs,
+            time_col="fixtime",
+            groupers=groupers,
+            cast_to_datetime=True,
+            format="mixed",
+            **(params.get("relocs_add_temporal_index") or {}),
+        )
+        .call()
+    )
+
+    split_relocs_groups = (
+        task(split_groups)
+        .validate()
+        .set_task_instance_id("split_relocs_groups")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=relocs_add_temporal_index,
+            groupers=groupers,
+            **(params.get("split_relocs_groups") or {}),
+        )
+        .call()
+    )
+
+    traj_add_temporal_index = (
+        task(add_temporal_index)
+        .validate()
+        .set_task_instance_id("traj_add_temporal_index")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -397,7 +442,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             groupers=groupers,
             cast_to_datetime=True,
             format="mixed",
-            **(params.get("obs_add_temporal_index") or {}),
+            **(params.get("traj_add_temporal_index") or {}),
         )
         .call()
     )
@@ -416,7 +461,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=obs_add_temporal_index,
+            df=traj_add_temporal_index,
             groupers=groupers,
             **(params.get("split_traj_groups") or {}),
         )
@@ -436,12 +481,12 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(df=filter_obs, **(params.get("skip_relocation_persist") or {}))
-        .call()
+        .partial(**(params.get("skip_relocation_persist") or {}))
+        .mapvalues(argnames=["df"], argvalues=split_relocs_groups)
     )
 
     persist_relocations = (
-        task(persist_df_for_results_download)
+        task(persist_grouped_dfs_for_results_download)
         .validate()
         .set_task_instance_id("persist_relocations")
         .handle_errors()
@@ -456,16 +501,14 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .partial(
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             sanitize=True,
-            df_or_grouped_dfs=skip_relocation_persist,
-            groupers=groupers,
-            reference_keys=split_traj_groups,
+            grouped_dfs=skip_relocation_persist,
             **(params.get("persist_relocations") or {}),
         )
         .call()
     )
 
     persist_tracks = (
-        task(persist_df_for_results_download)
+        task(persist_grouped_dfs_for_results_download)
         .validate()
         .set_task_instance_id("persist_tracks")
         .handle_errors()
@@ -477,7 +520,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df_or_grouped_dfs=split_traj_groups,
+            grouped_dfs=split_traj_groups,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             sanitize=True,
             **(params.get("persist_tracks") or {}),
