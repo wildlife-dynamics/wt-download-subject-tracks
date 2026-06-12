@@ -74,7 +74,16 @@
         "subject_group_name": {
           "title": "Subject Group Name",
           "type": "string",
-          "description": "Specify the subject group to download observations for. Enter the exact \"Subject Group\" name as it appears in EarthRanger (e.g. \"Ecoscope\"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations \u2192 Subject groups"
+          "description": "Specify the subject group to download observations for. Enter the exact \"Subject Group\" name as it appears in EarthRanger (e.g. \"Ecoscope\"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations \u2192 Subject groups",
+          "ecoscope:transform": [
+            {
+              "transformer": "EarthRangerEnumResolver",
+              "transformer_kws": {
+                "type": "subject_group_name",
+                "depends_on": "properties.er_client_name.properties.data_source.properties.name"
+              }
+            }
+          ]
         },
         "include_details": {
           "default": false,

@@ -18,6 +18,11 @@ rjsf-overrides:
   properties:
     subject_obs.properties.subject_group_name.description: >-
       Specify the subject group to download observations for. Enter the exact "Subject Group" name as it appears in EarthRanger (e.g. "Ecoscope"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations → Subject groups
+    subject_obs.properties.subject_group_name.ecoscope:transform:
+      - transformer: EarthRangerEnumResolver
+        transformer_kws:
+          type: subject_group_name
+          depends_on: properties.er_client_name.properties.data_source.properties.name
     Generate Maps.properties.skip_map_generation.properties.skip.description: >-
       Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
     Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
