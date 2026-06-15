@@ -49,7 +49,6 @@ base:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           opacity: 0.5
           max_zoom: 17
-          min_zoom: null
     skip_relocation_persist:
       skip: false
     persist_relocations:
@@ -106,7 +105,6 @@ month-grouper:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           opacity: 0.5
           max_zoom: 17
-          min_zoom: null
 
 with-details:
   name: Test Case with Observation and Subject Source Details
@@ -154,7 +152,6 @@ with-details:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           opacity: 0.5
           max_zoom: 17
-          min_zoom: null
 
 with-filter:
   name: With a Filter Flag
@@ -189,7 +186,6 @@ with-filter:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           opacity: 0.5
           max_zoom: 17
-          min_zoom: null
 
 value-grouper:
   name: Value Grouper by Subject Name
@@ -301,7 +297,6 @@ skip-maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           opacity: 0.5
           max_zoom: 17
-          min_zoom: null
     skip_map_generation:
       skip: true
 
@@ -347,6 +342,5 @@ no-subjectsource-details:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           opacity: 0.5
           max_zoom: 17
-          min_zoom: null
     skip_map_generation:
       skip: true
