@@ -1,15 +1,26 @@
 id: download_subjects
 requirements:
   - name: ecoscope-platform
-    version: "2.11.6"
+    version: ">=2.15.0, <2.16.0"
     channel: https://repo.prefix.dev/ecoscope-workflows/
   - name: ecoscope-workflows-ext-custom
-    version: "0.1.0rc2"
+    version: "0.1.0rc8"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
+  # ecoscope-platform already declares this exact pydeck dependency. it is
+  # re-stated here as a workaround for a known issue. for further detail, see:
+  # https://github.com/wildlife-dynamics/wt/issues/167#issuecomment-4451993697
+  - name: pydeck
+    version: 0.9.2
+    channel: conda-forge
 rjsf-overrides:
   properties:
     subject_obs.properties.subject_group_name.description: >-
       Specify the subject group to download observations for. Enter the exact "Subject Group" name as it appears in EarthRanger (e.g. "Ecoscope"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations → Subject groups
+    subject_obs.properties.subject_group_name.ecoscope:transform:
+      - transformer: EarthRangerEnumResolver
+        transformer_kws:
+          type: subject_group_name
+          depends_on: properties.er_client_name.properties.data_source.properties.name
     Generate Maps.properties.skip_map_generation.properties.skip.description: >-
       Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
     Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
@@ -166,8 +177,25 @@ workflow:
         id: groupers
         task: set_groupers
 
-      - name: Add temporal index to observations
-        id: obs_add_temporal_index
+      - name: Add temporal index to relocations
+        id: relocs_add_temporal_index
+        task: add_temporal_index
+        partial:
+          df: ${{ workflow.filter_obs.return }}
+          time_col: "fixtime"
+          groupers: ${{ workflow.groupers.return }}
+          cast_to_datetime: true
+          format: "mixed"
+
+      - name: Split relocs by Group
+        id: split_relocs_groups
+        task: split_groups
+        partial:
+          df: ${{ workflow.relocs_add_temporal_index.return }}
+          groupers: ${{ workflow.groupers.return }}
+
+      - name: Add temporal index to trajectories
+        id: traj_add_temporal_index
         task: add_temporal_index
         partial:
           df: ${{ workflow.sql_query.return }}
@@ -180,7 +208,7 @@ workflow:
         id: split_traj_groups
         task: split_groups
         partial:
-          df: ${{ workflow.obs_add_temporal_index.return }}
+          df: ${{ workflow.traj_add_temporal_index.return }}
           groupers: ${{ workflow.groupers.return }}
 
   - title: Persist Relocations
@@ -191,26 +219,28 @@ workflow:
       - name: Skip Relocation Persistence
         id: skip_relocation_persist
         task: maybe_skip_df
-        partial:
-          df: ${{ workflow.filter_obs.return }}
+        mapvalues:
+          argnames: df
+          argvalues: ${{ workflow.split_relocs_groups.return }}
 
       - name: " "
         id: persist_relocations
-        task: persist_df_wrapper
+        task: persist_grouped_dfs_for_results_download
         partial:
           root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
           sanitize: true
-          df: ${{ workflow.skip_relocation_persist.return }}
+          grouped_dfs: ${{ workflow.skip_relocation_persist.return }}
+        skipif:
+          conditions:
+            - never
 
   - name: Persist Subject Trajectories
     id: persist_tracks
-    task: persist_df_wrapper
+    task: persist_grouped_dfs_for_results_download
     partial:
+      grouped_dfs: ${{ workflow.split_traj_groups.return }}
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       sanitize: true
-    mapvalues:
-      argnames: df
-      argvalues: ${{ workflow.split_traj_groups.return }}
     skipif:
       conditions:
         - never

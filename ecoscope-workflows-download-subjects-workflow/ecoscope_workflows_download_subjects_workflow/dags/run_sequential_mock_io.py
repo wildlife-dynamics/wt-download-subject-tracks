@@ -7,9 +7,9 @@ Lines specific to the testing context are marked with a test tube emoji (🧪) t
 that they would not be included (or would be different) in the production version of this file.
 """
 
-import json
 import os
 import warnings  # 🧪
+from typing import Any
 
 from ecoscope.platform.tasks.config import set_workflow_details as set_workflow_details
 from ecoscope.platform.tasks.filter import (
@@ -21,8 +21,11 @@ from ecoscope.platform.tasks.skip import (
     any_dependency_skipped as any_dependency_skipped,
 )
 from ecoscope.platform.tasks.skip import any_is_empty_df as any_is_empty_df
+from wt_contracts import validate as _validate
 from wt_task import task
 from wt_task.testing import create_func_magicmock  # 🧪
+
+from .. import metadata as _metadata
 
 get_subjectgroup_observations = create_func_magicmock(  # 🧪
     anchor="ecoscope.platform.tasks.io",  # 🧪
@@ -65,7 +68,7 @@ from ecoscope.platform.tasks.warning import (
     mixed_subtype_warning as mixed_subtype_warning,
 )
 from ecoscope_workflows_ext_custom.tasks.io import (
-    persist_df_wrapper as persist_df_wrapper,
+    persist_grouped_dfs_for_results_download as persist_grouped_dfs_for_results_download,
 )
 from ecoscope_workflows_ext_custom.tasks.skip import maybe_skip_df as maybe_skip_df
 from ecoscope_workflows_ext_custom.tasks.transformation import (
@@ -75,13 +78,12 @@ from ecoscope_workflows_ext_custom.tasks.transformation import (
     drop_column_prefix as drop_column_prefix,
 )
 
-from ..params import Params
 
-
-def main(params: Params):
+def main(params: dict[str, Any], validate_params_schema: bool = True):
     warnings.warn("This test script should not be used in production!")  # 🧪
 
-    params_dict = json.loads(params.model_dump_json(exclude_unset=True))
+    if validate_params_schema:
+        _validate(params, _metadata.load_params_schema())
 
     workflow_details = (
         task(set_workflow_details)
@@ -96,7 +98,7 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(**(params_dict.get("workflow_details") or {}))
+        .partial(**(params.get("workflow_details") or {}))
         .call()
     )
 
@@ -113,9 +115,7 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(
-            time_format="%d %b %Y %H:%M:%S", **(params_dict.get("time_range") or {})
-        )
+        .partial(time_format="%d %b %Y %H:%M:%S", **(params.get("time_range") or {}))
         .call()
     )
 
@@ -132,7 +132,7 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(time_range=time_range, **(params_dict.get("get_timezone") or {}))
+        .partial(time_range=time_range, **(params.get("get_timezone") or {}))
         .call()
     )
 
@@ -149,7 +149,7 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(**(params_dict.get("er_client_name") or {}))
+        .partial(**(params.get("er_client_name") or {}))
         .call()
     )
 
@@ -170,7 +170,7 @@ def main(params: Params):
             client=er_client_name,
             time_range=time_range,
             raise_on_empty=False,
-            **(params_dict.get("subject_obs") or {}),
+            **(params.get("subject_obs") or {}),
         )
         .call()
     )
@@ -187,9 +187,7 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(
-            subject_obs=subject_obs, **(params_dict.get("warn_if_mixed_subtype") or {})
-        )
+        .partial(subject_obs=subject_obs, **(params.get("warn_if_mixed_subtype") or {}))
         .call()
     )
 
@@ -210,7 +208,7 @@ def main(params: Params):
             df=subject_obs,
             timezone=get_timezone,
             columns=["fixtime"],
-            **(params_dict.get("convert_to_user_timezone") or {}),
+            **(params.get("convert_to_user_timezone") or {}),
         )
         .call()
     )
@@ -232,7 +230,7 @@ def main(params: Params):
             df=convert_to_user_timezone,
             prefix="extra__",
             duplicate_strategy="suffix",
-            **(params_dict.get("drop_extra_prefix") or {}),
+            **(params.get("drop_extra_prefix") or {}),
         )
         .call()
     )
@@ -255,7 +253,7 @@ def main(params: Params):
             roi_gdf=None,
             roi_name=None,
             reset_index=False,
-            **(params_dict.get("filter_obs") or {}),
+            **(params.get("filter_obs") or {}),
         )
         .call()
     )
@@ -273,7 +271,7 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(relocations=filter_obs, **(params_dict.get("subject_traj") or {}))
+        .partial(relocations=filter_obs, **(params.get("subject_traj") or {}))
         .call()
     )
 
@@ -294,7 +292,7 @@ def main(params: Params):
             df=subject_traj,
             prefix="extra__",
             duplicate_strategy="suffix",
-            **(params_dict.get("drop_extra_prefix_traj") or {}),
+            **(params.get("drop_extra_prefix_traj") or {}),
         )
         .call()
     )
@@ -318,7 +316,7 @@ def main(params: Params):
             drop_columns=["id"],
             retain_columns=[],
             raise_if_not_found=False,
-            **(params_dict.get("customize_columns_internally") or {}),
+            **(params.get("customize_columns_internally") or {}),
         )
         .call()
     )
@@ -341,7 +339,7 @@ def main(params: Params):
             rename_columns={},
             retain_columns=[],
             raise_if_not_found=False,
-            **(params_dict.get("customize_columns") or {}),
+            **(params.get("customize_columns") or {}),
         )
         .call()
     )
@@ -359,7 +357,7 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(df=customize_columns, **(params_dict.get("sql_query") or {}))
+        .partial(df=customize_columns, **(params.get("sql_query") or {}))
         .call()
     )
 
@@ -376,14 +374,59 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(**(params_dict.get("groupers") or {}))
+        .partial(**(params.get("groupers") or {}))
         .call()
     )
 
-    obs_add_temporal_index = (
+    relocs_add_temporal_index = (
         task(add_temporal_index)
         .validate()
-        .set_task_instance_id("obs_add_temporal_index")
+        .set_task_instance_id("relocs_add_temporal_index")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=filter_obs,
+            time_col="fixtime",
+            groupers=groupers,
+            cast_to_datetime=True,
+            format="mixed",
+            **(params.get("relocs_add_temporal_index") or {}),
+        )
+        .call()
+    )
+
+    split_relocs_groups = (
+        task(split_groups)
+        .validate()
+        .set_task_instance_id("split_relocs_groups")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            df=relocs_add_temporal_index,
+            groupers=groupers,
+            **(params.get("split_relocs_groups") or {}),
+        )
+        .call()
+    )
+
+    traj_add_temporal_index = (
+        task(add_temporal_index)
+        .validate()
+        .set_task_instance_id("traj_add_temporal_index")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -399,7 +442,7 @@ def main(params: Params):
             groupers=groupers,
             cast_to_datetime=True,
             format="mixed",
-            **(params_dict.get("obs_add_temporal_index") or {}),
+            **(params.get("traj_add_temporal_index") or {}),
         )
         .call()
     )
@@ -418,9 +461,9 @@ def main(params: Params):
             unpack_depth=1,
         )
         .partial(
-            df=obs_add_temporal_index,
+            df=traj_add_temporal_index,
             groupers=groupers,
-            **(params_dict.get("split_traj_groups") or {}),
+            **(params.get("split_traj_groups") or {}),
         )
         .call()
     )
@@ -438,36 +481,14 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(df=filter_obs, **(params_dict.get("skip_relocation_persist") or {}))
-        .call()
+        .partial(**(params.get("skip_relocation_persist") or {}))
+        .mapvalues(argnames=["df"], argvalues=split_relocs_groups)
     )
 
     persist_relocations = (
-        task(persist_df_wrapper)
+        task(persist_grouped_dfs_for_results_download)
         .validate()
         .set_task_instance_id("persist_relocations")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
-            sanitize=True,
-            df=skip_relocation_persist,
-            **(params_dict.get("persist_relocations") or {}),
-        )
-        .call()
-    )
-
-    persist_tracks = (
-        task(persist_df_wrapper)
-        .validate()
-        .set_task_instance_id("persist_tracks")
         .handle_errors()
         .with_tracing()
         .skipif(
@@ -479,9 +500,31 @@ def main(params: Params):
         .partial(
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             sanitize=True,
-            **(params_dict.get("persist_tracks") or {}),
+            grouped_dfs=skip_relocation_persist,
+            **(params.get("persist_relocations") or {}),
         )
-        .mapvalues(argnames=["df"], argvalues=split_traj_groups)
+        .call()
+    )
+
+    persist_tracks = (
+        task(persist_grouped_dfs_for_results_download)
+        .validate()
+        .set_task_instance_id("persist_tracks")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                never,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            grouped_dfs=split_traj_groups,
+            root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
+            sanitize=True,
+            **(params.get("persist_tracks") or {}),
+        )
+        .call()
     )
 
     skip_map_generation = (
@@ -497,7 +540,7 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(**(params_dict.get("skip_map_generation") or {}))
+        .partial(**(params.get("skip_map_generation") or {}))
         .mapvalues(argnames=["df"], argvalues=split_traj_groups)
     )
 
@@ -516,7 +559,7 @@ def main(params: Params):
         )
         .partial(
             var="Subject Group Trajectory Map",
-            **(params_dict.get("set_traj_map_title") or {}),
+            **(params.get("set_traj_map_title") or {}),
         )
         .call()
     )
@@ -534,7 +577,7 @@ def main(params: Params):
             ],
             unpack_depth=1,
         )
-        .partial(**(params_dict.get("base_map_defs") or {}))
+        .partial(**(params.get("base_map_defs") or {}))
         .call()
     )
 
@@ -558,7 +601,7 @@ def main(params: Params):
             default_color="#FFFF00",
             default_palette="tab20b",
             additional_column="subject__additional",
-            **(params_dict.get("colormap_traj") or {}),
+            **(params.get("colormap_traj") or {}),
         )
         .mapvalues(argnames=["df"], argvalues=skip_map_generation)
     )
@@ -580,7 +623,7 @@ def main(params: Params):
             column_name="subject__name",
             ascending=True,
             na_position="last",
-            **(params_dict.get("sort_subject_names") or {}),
+            **(params.get("sort_subject_names") or {}),
         )
         .mapvalues(argnames=["df"], argvalues=colormap_traj)
     )
@@ -609,7 +652,7 @@ def main(params: Params):
                 "subject__name": "Subject Name",
                 "subject__sex": "Subject Sex",
             },
-            **(params_dict.get("rename_display_columns") or {}),
+            **(params.get("rename_display_columns") or {}),
         )
         .mapvalues(argnames=["df"], argvalues=sort_subject_names)
     )
@@ -639,7 +682,7 @@ def main(params: Params):
                 "Subject Name",
                 "Subject Sex",
             ],
-            **(params_dict.get("traj_map_layers") or {}),
+            **(params.get("traj_map_layers") or {}),
         )
         .mapvalues(argnames=["geodataframe"], argvalues=rename_display_columns)
     )
@@ -669,7 +712,7 @@ def main(params: Params):
             title=None,
             max_zoom=20,
             widget_id=set_traj_map_title,
-            **(params_dict.get("traj_ecomap") or {}),
+            **(params.get("traj_ecomap") or {}),
         )
         .mapvalues(argnames=["geo_layers"], argvalues=traj_map_layers)
     )
@@ -690,7 +733,7 @@ def main(params: Params):
         .partial(
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             filename_suffix="v2",
-            **(params_dict.get("ecomap_html_urls") or {}),
+            **(params.get("ecomap_html_urls") or {}),
         )
         .mapvalues(argnames=["text"], argvalues=traj_ecomap)
     )
@@ -709,7 +752,7 @@ def main(params: Params):
         )
         .partial(
             title=set_traj_map_title,
-            **(params_dict.get("traj_map_widgets_single_views") or {}),
+            **(params.get("traj_map_widgets_single_views") or {}),
         )
         .map(argnames=["view", "data"], argvalues=ecomap_html_urls)
     )
@@ -729,7 +772,7 @@ def main(params: Params):
         )
         .partial(
             widgets=traj_map_widgets_single_views,
-            **(params_dict.get("traj_grouped_map_widget") or {}),
+            **(params.get("traj_grouped_map_widget") or {}),
         )
         .call()
     )
@@ -753,7 +796,7 @@ def main(params: Params):
             groupers=groupers,
             time_range=time_range,
             warning=warn_if_mixed_subtype,
-            **(params_dict.get("subject_tracking_dashboard") or {}),
+            **(params.get("subject_tracking_dashboard") or {}),
         )
         .call()
     )
