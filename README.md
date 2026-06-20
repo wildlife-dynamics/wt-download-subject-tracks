@@ -44,11 +44,7 @@ Before using this workflow, you need:
 
 ## Configuration Guide
 
-Once you've added the workflow template, you'll need to configure it for your specific needs. The configuration form is organized into several sections.
-
-### Basic Configuration
-
-These are the essential settings you'll need to configure for every workflow run:
+Once you've added the workflow template, you'll need to configure it for your specific needs. The configuration form is organized into the sections below, in the order they appear in the form. Several fields are tucked inside an **Advanced Configurations** disclosure within their section — expand it to reveal them. Sensible defaults are provided throughout, so a basic run only requires the first four sections.
 
 #### 1. Workflow Details
 Give your workflow a name and description to help you identify it later.
@@ -80,121 +76,73 @@ Choose which subject group to analyze.
   - Example: `"Subjects"`
   - Note: Subject group contains mixed subtypes can lead to unexpected behaviors (e.g., different species or asset types)
 
-#### 5. Group Data (Optional)
-Organize your data into separate views based on time periods or categories.
-
-- **Group by**: Create separate outputs grouped by:
-  - Time: Year, Month, Day of week, Hour, etc.
-  - Category: Select a categorical column from your tracking data. If you're unsure which columns are available, run the workflow once without grouping to see the data, then configure grouping in a subsequent run.
-
-#### 6. Persist Subject Trajectories
-Choose how to save your data.
-
-- **Filetypes**: Select one or more output formats
-  - **CSV**: Standard spreadsheet format, opens in Excel
-  - **Parquet**: Efficient format for geospatial data
-  - Example: Select both `CSV` and `Parquet`
-
-#### 7. Skip Map Generation
-Control whether to create map visualizations.
-
-- **Skip**: Check this to skip map generation
-  - Recommended for large datasets to improve performance
-  - Default: unchecked (maps will be generated)
-
-### Advanced Configuration
-
-These optional settings provide additional control over your workflow:
-
-#### Subject Group Options
-
-##### Include Details
-Whether or not to include observation details in the output data.
+The following fields live under **Advanced Configurations** in this section:
 
 - **Include Details**: Include additional details from each observation
-  - Default: `false` (not included)
-  - check to include detailed observation information
-
-##### Include Subject Source Details
-Whether or not to include subject source details in the output data.
-
+  - Default: `false` (not included) — check to include detailed observation information
 - **Include Subject Source Details**: Include information about the tracking device/source
-  - Default: `false` (not included)
-  - Check to include device and source information
-
-##### Observation Exclusion Filter
-Control which observations are returned based on EarthRanger's exclusion flags. Exclusion flags are data quality markers set on each observation in EarthRanger.
-
-- **Filter**: Select which observations to include based on their exclusion status
+  - Default: `false` (not included) — check to include device and source information
+- **Filter**: Control which observations are returned based on EarthRanger's exclusion flags (data quality markers set on each observation)
   - `clean` (default): Only observations that have not been flagged as problematic
   - `none`: All observations regardless of exclusion flags (raw data)
   - `manually_filtered`: Only observations that were manually flagged
   - `automatically_filtered`: Only observations that were automatically flagged
   - `manually_and_automatically_filtered`: Observations flagged either manually or automatically
 
-#### Process Observations
+#### 5. Filter Data
+A single card combining the location and trajectory-segment filters. These remove noisy or out-of-area data and apply to **both the generated map and the downloaded files**. All fields sit under **Advanced Configurations** — defaults keep everything, so expand only if you need to filter.
 
-##### Bounding Box
-Limit observations to a geographic area.
-
-- **Bounding Box**: Restrict data to specific coordinates
+- **Bounding Box**: Restrict data to a geographic area
   - Default: entire world (-180 to 180 longitude, -90 to 90 latitude)
   - Example: Set bounds for your study area to exclude observations outside the region
-
-##### Filter Exact Point Coordinates
-Exclude observations at specific coordinates.
-
-- **Filter Exact Point Coordinates**: Remove data at exact locations
-  - Useful for filtering out test data or GPS outliers
+- **Filter Exact Point Coordinates**: Exclude observations recorded at specific exact coordinates (e.g. known bad GPS fixes or test data)
   - Example: `[{"Latitude": 0.0, "Longitude": 0.0}, {"Latitude": 180.0, "Longitude": 90.0}]`
+- **Trajectory Filter**: Drop trajectory segments outside these length, duration, and speed bounds
+  - **Minimum / Maximum Segment Length (Meters)**: Defaults `0.001` / `100000` (100 km). Example max `10000` to filter out unrealistic jumps
+  - **Minimum / Maximum Segment Duration (Seconds)**: Defaults `1` / `172800` (48 hours). Example max `21600` (6 hours) to filter out large gaps
+  - **Minimum / Maximum Segment Speed (Kilometers per Hour)**: Defaults `0.01` / `500`. Example max `10.0` to filter out unrealistic speeds for elephants
 
-##### Trajectory Segment Filter
-Filter track data by setting limits on track segment length, duration, and speed. Segments outside these bounds are removed, reducing noise and focusing on meaningful movement patterns.
+#### 6. Group Data (Optional)
+Organize your data into separate views based on time periods or categories.
 
-- **Minimum Segment Length (Meters)**: Shortest distance allowed for a segment
-  - Default: `0.001`
-  - Example: `0.001` (include very short movements)
-- **Maximum Segment Length (Meters)**: Longest distance allowed for a segment
-  - Default: `100000` (100 km)
-  - Example: `10000` (1 km - filter out unrealistic jumps)
-- **Minimum Segment Duration (Seconds)**: Shortest time allowed for a segment
-  - Default: `1`
-  - Example: `1` (minimum 1 second between observations)
-- **Maximum Segment Duration (Seconds)**: Longest time allowed for a segment
-  - Default: `172800` (48 hours)
-  - Example: `21600` (6 hours - filter out large gaps)
-- **Minimum Segment Speed (Kilometers per Hour)**: Slowest speed allowed
-  - Default: `0.01`
-  - Example: `0.01` (include stationary or very slow movement)
-- **Maximum Segment Speed (Kilometers per Hour)**: Fastest speed allowed
-  - Default: `500`
-  - Example: `10.0` (filter out unrealistic speeds for elephants)
+- **Group by**: Create separate outputs grouped by:
+  - Time: Year, Month, Day of week, Hour, etc.
+  - Category: Subject Name, Subject Subtype, or Subject Sex. If you're unsure which to use, run the workflow once without grouping to see the data, then configure grouping in a subsequent run.
 
-##### Process Columns
-Customize which columns appear in your output.
+#### 7. Refine Data (Optional)
+Reshape and organize your data before downloading. **These steps apply to the downloaded files only — not the generated map.** Both fields sit under **Advanced Configurations**.
 
-- **Drop Columns**: List of columns to drop from the output
-  - Default includes common internal/system columns: `location`, `patrol_serial_number`, `patrol_status`, `patrol_subject`, `patrol_type__value`, `subject__content_type`, `subject__device_status_properties`, `subject__user`
-  - Modify the list based on your requirements - add columns you want to hide or remove columns you want to keep
+- **Process Columns → Drop Columns**: List of columns to drop from the downloaded files
+  - Default includes common internal/system columns (e.g. `location`, `subject__content_type`, `subject__user`, `subjectsource__source`, and others)
+  - Modify the list based on your requirements — add columns you want to hide or remove columns you want to keep
+- **Apply SQL Query → Query**: Filter or transform the data with SQL
+  - Use `df` as the table name. Example: `SELECT * FROM df WHERE speed_kmhr > 5.0`
+  - Leave empty to skip. Complex columns (lists/dicts) are handled automatically — there is no longer a separate "Columns" field to maintain.
 
-##### Apply SQL Query
-Advanced users can filter or transform data using SQL.
+#### 8. Download File Format
+A single card for choosing how your data is saved.
 
-- **Query**: Write a SQL query to filter or modify the data
-  - Use `df` as the table name
-  - Example: `SELECT * FROM df WHERE speed_kmhr > 5.0`
-  - Leave empty to skip
-- **Columns**: Optional list of column names to include in the SQL query
-  - Use this to exclude columns with unsupported data types (list, dict)
-  - Leave empty to include all columns
+- **Track Filetypes** (required): Output format(s) for the subject trajectory (track) files
+  - **CSV**: Standard spreadsheet format, opens in Excel
+  - **Parquet**: Efficient format for geospatial data
+  - Example: Select both `CSV` and `Parquet`
+- **Download GPS points**: Check to also export the raw relocations (the individual GPS points *before* conversion to trajectory segments)
+  - Default: unchecked (only the tracks are exported)
+- **GPS Point Filetypes** (required): Output format(s) for the GPS point files (used when *Download GPS points* is checked)
 
-#### Map Base Layers
-Customize the background maps for your visualizations.
+The following fields live under **Advanced Configurations** in this section:
 
-- **Base Maps**: Select one or more base layers
-  - Available options: Open Street Map, Roadmap, Satellite, Terrain, LandDx, USGS Hillshade or custom layers with a URL
-  - Default: Terrain and Satellite layers
-  - The first layer will appear on the bottom
+- **Track filename prefix**: Prefix for the track output files (default `subject_tracks`). A unique ID is appended automatically.
+- **GPS point filename prefix**: Prefix for the GPS point output files (default `relocations`). A unique ID is appended automatically.
+
+#### 9. Generate Maps
+Control whether to create map visualizations.
+
+- **Generate maps in dashboard**: Checked = maps are generated and shown in the dashboard
+  - Default: checked. Uncheck to skip map generation (not recommended for large datasets, where skipping improves performance)
+- **Map Base Layers** (under **Advanced Configurations**): Select one or more base layers for your map background
+  - Available options: Open Street Map, Roadmap, Satellite, Terrain, USGS Hillshade, or a custom layer URL
+  - Default: Terrain and Satellite layers. The first layer in the list appears on the bottom.
 
 ## Running the Workflow
 
@@ -221,8 +169,7 @@ After the workflow completes successfully, you'll find your outputs in the desig
 
 ### Data Outputs
 
-Your subject tracking data will be saved in the format(s) you selected:
-
+Your subject **trajectory (track)** data will be saved in the format(s) you selected under *Track Filetypes*. If you checked **Download GPS points**, you'll also get a separate **relocations** file containing the individual GPS points before they were converted to trajectory segments (in the *GPS Point Filetypes* you selected). Note that any **Process Columns** drops and **SQL Query** transforms in *Refine Data* apply to these downloaded files only — not to the map.
 
 - **File formats**: CSV and/or Parquet (based on your selection)
 - **Opens in**: Microsoft Excel, Google Sheets (CSV), Python/R (Parquet)
@@ -241,7 +188,7 @@ Your subject tracking data will be saved in the format(s) you selected:
 
 ### Visual Outputs (When Maps are Generated)
 
-If you didn't skip map generation, you'll also receive:
+If **Generate maps in dashboard** was checked, you'll also receive:
 
 #### Interactive Map
 - **Format**: HTML file or embedded in dashboard
@@ -279,8 +226,8 @@ Here are some typical scenarios and how to configure the workflow for each:
   - Until: `2015-01-07T23:59:59`
   - Timezone: `Africa/Nairobi (UTC+03:00)`
 - **Subject Group Name**: `"Subjects"`
-- **Filetypes**: Select `CSV`
-- **Skip Map Generation**: Checked (for faster processing)
+- **Download File Format → Track Filetypes**: Select `CSV`
+- **Generate maps in dashboard**: Unchecked (for faster processing)
 
 **Result**: Single CSV file with all trajectory segments for the Ecoscope subject group from January 1-7, 2015
 
@@ -297,8 +244,8 @@ Here are some typical scenarios and how to configure the workflow for each:
 - **Subject Group Name**: `"Subjects"`
 - **Group Data**:
   - Select `"%B"` (Month name: January, February, etc.)
-- **Filetypes**: Select `CSV` and `Parquet`
-- **Skip Map Generation**: Unchecked
+- **Download File Format → Track Filetypes**: Select `CSV` and `Parquet`
+- **Generate maps in dashboard**: Checked
 
 **Result**:
 - 12 separate CSV and Parquet files, one for each month
@@ -312,17 +259,17 @@ Here are some typical scenarios and how to configure the workflow for each:
 **Configuration**:
 - **Time Range**: Your desired date range
 - **Subject Group Name**: Your subject group
-- **Bounding Box** (Advanced):
+- **Filter Data → Bounding Box** (under Advanced Configurations):
   - Set coordinates for your area of interest
   - Example: Min Longitude: 37.0, Max Longitude: 38.0, Min Latitude: -1.0, Max Latitude: 0.0
-- **Trajectory Segment Filter** (Advanced):
+- **Filter Data → Trajectory Filter** (under Advanced Configurations):
   - **Min Segment Length**: `0.001` meters
   - **Max Segment Length**: `1000` meters (1 km - filter out GPS jumps)
   - **Min Time**: `1` second
   - **Max Time**: `21600` seconds (6 hours - filter out large gaps)
   - **Min Speed**: `0.01` km/hr
   - **Max Speed**: `20` km/hr
-- **Filetypes**: Select preferred formats
+- **Download File Format → Track Filetypes**: Select preferred formats
 
 **Result**: Trajectory segments only from within your specified geographic boundaries with reasonable moving patterns
 
@@ -336,8 +283,8 @@ Here are some typical scenarios and how to configure the workflow for each:
   - Since: `2015-01-01T00:00:00`
   - Until: `2015-12-31T23:59:59`
 - **Subject Group Name**: Your subject group
-- **Filetypes**: Select `Parquet` (most efficient for large datasets)
-- **Skip Map Generation**: Checked
+- **Download File Format → Track Filetypes**: Select `Parquet` (most efficient for large datasets)
+- **Generate maps in dashboard**: Unchecked
 
 **Result**:
 - Efficient Parquet file with full year of tracking data
@@ -371,7 +318,7 @@ Here are some typical scenarios and how to configure the workflow for each:
 **Problem**: The workflow takes an extremely long time to complete
 
 **Solutions**:
-- Enable "Skip Map Generation" for large datasets
+- Uncheck "Generate maps in dashboard" for large datasets
 - Reduce the date range to smaller time periods
 - Process data in smaller batches (by week or month instead of year)
 - Consider using only Parquet format (most efficient) instead of multiple formats
@@ -389,7 +336,7 @@ Here are some typical scenarios and how to configure the workflow for each:
 **Problem**: Data downloads successfully but no map is created
 
 **Solutions**:
-- Ensure "Skip Map Generation" is unchecked
+- Ensure "Generate maps in dashboard" is checked
 - Verify your trajectory segments have valid geometry/location data
 - Try using default base map settings
 - Check that observations have coordinate data (not just null values)

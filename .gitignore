@@ -167,3 +167,5 @@ cython_debug/
 .claude
 .env
 .vscode
+# Planning artifacts (PRD, progress) — never commit
+.scratch/
