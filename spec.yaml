@@ -84,10 +84,10 @@ rjsf-overrides:
         type: string
         default: "relocations"
         "ecoscope:advanced": true
-    # additionalProperties must allow the conditionally-added gps_point_filetypes; with the
-    # default `false` plus the form's ajv `removeAdditional: 'failing'`, ajv treats a
-    # dependency-added property as "additional" and would strip the dropdown's value on submit.
-    Download File Format.properties.download_params.additionalProperties: true
+    # NOTE: do NOT override additionalProperties. The ecoscope-web renderer flips an object
+    # into a free-form "Key/value + Add" map editor whenever additionalProperties is truthy,
+    # which mangles every field. Left at the compiled default (false), the object renders
+    # normally and the dependency below still surfaces gps_point_filetypes when checked.
     # Show gps_point_filetypes ONLY when download_gps_points is checked (schema dependency).
     Download File Format.properties.download_params.dependencies:
       download_gps_points:

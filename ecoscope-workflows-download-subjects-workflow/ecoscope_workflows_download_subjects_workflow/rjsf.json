@@ -293,7 +293,7 @@
       "ecoscope:task_group": true,
       "properties": {
         "download_params": {
-          "additionalProperties": true,
+          "additionalProperties": false,
           "properties": {
             "track_filetypes": {
               "title": "Track Filetypes",
