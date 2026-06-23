@@ -106,6 +106,10 @@ workflow:
     id: workflow_details
     task: set_workflow_details
 
+  - name: Data Source
+    id: er_client_name
+    task: set_er_connection
+
   - name: Time Range
     id: time_range
     task: set_time_range
@@ -117,10 +121,6 @@ workflow:
     task: get_timezone_from_time_range
     partial:
       time_range: ${{ workflow.time_range.return }}
-
-  - name: Data Source
-    id: er_client_name
-    task: set_er_connection
 
   # subject group observations
   - name: "Get Subject Group Observations from EarthRanger"
