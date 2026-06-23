@@ -102,7 +102,11 @@ rjsf-overrides:
                 title: "GPS Point Filetypes"
                 description: "The output format for the GPS point (relocation) files."
                 type: array
-                default: ["parquet"]
+                # No `default` here: a default on a conditional (dependency) branch gets
+                # seeded into formData even while the false branch is active, leaving an
+                # orphaned value that renders as a broken "additional property" editor when
+                # the box is unchecked. The task signature still defaults to ["parquet"] at
+                # runtime if the user leaves it empty.
                 uniqueItems: true
                 items:
                   type: string
