@@ -54,10 +54,59 @@ rjsf-overrides:
       Write a SQL query to filter or transform your subject trajectory data. Leave blank to skip this step. Use df as the table name (e.g., SELECT * FROM df WHERE status = 'active'). Note that queries only apply to your downloaded files and not the generated map.
 
     # --- Download File Format: combined download config (one card + Advanced disclosure) ---
-    Download File Format.properties.download_params.properties.track_filetypes.default: ["parquet"]
-    Download File Format.properties.download_params.properties.track_filetypes.items.enum: ["csv", "parquet"]
-    Download File Format.properties.download_params.properties.gps_point_filetypes.default: ["parquet"]
-    Download File Format.properties.download_params.properties.gps_point_filetypes.items.enum: ["csv", "parquet"]
+    # Replace download_params.properties wholesale to DROP gps_point_filetypes from the
+    # always-on fields; it is re-introduced below via a schema `dependencies` block so it
+    # only renders once "Download GPS points" is checked. (Compiler overrides can add/replace
+    # but not delete keys, so the field is removed by restating the properties block.)
+    Download File Format.properties.download_params.properties:
+      track_filetypes:
+        title: "Track Filetypes"
+        description: "The output format for the subject track files."
+        type: array
+        default: ["parquet"]
+        uniqueItems: true
+        items:
+          type: string
+          enum: ["csv", "parquet"]
+      download_gps_points:
+        title: "Download GPS points"
+        type: boolean
+        default: false
+      track_filename_prefix:
+        title: "Track filename prefix"
+        description: "A name added to the beginning of your track output files. A unique ID is automatically added to the end to prevent duplicates."
+        type: string
+        default: "subject_tracks"
+        "ecoscope:advanced": true
+      gps_point_filename_prefix:
+        title: "GPS point filename prefix"
+        description: "A name added to the beginning of your GPS point output files. A unique ID is automatically added to the end to prevent duplicates."
+        type: string
+        default: "relocations"
+        "ecoscope:advanced": true
+    # additionalProperties must allow the conditionally-added gps_point_filetypes; with the
+    # default `false` plus the form's ajv `removeAdditional: 'failing'`, ajv treats a
+    # dependency-added property as "additional" and would strip the dropdown's value on submit.
+    Download File Format.properties.download_params.additionalProperties: true
+    # Show gps_point_filetypes ONLY when download_gps_points is checked (schema dependency).
+    Download File Format.properties.download_params.dependencies:
+      download_gps_points:
+        oneOf:
+          - properties:
+              download_gps_points:
+                const: false
+          - properties:
+              download_gps_points:
+                const: true
+              gps_point_filetypes:
+                title: "GPS Point Filetypes"
+                description: "The output format for the GPS point (relocation) files."
+                type: array
+                default: ["parquet"]
+                uniqueItems: true
+                items:
+                  type: string
+                  enum: ["csv", "parquet"]
 
     # --- Generate Maps ---
     # Drop the redundant task header; the checkbox label (value.title) is enough. Blank
@@ -143,9 +192,7 @@ workflow:
   # === FILTER LOCATIONS / SEGMENTS (combined filter config + splitters) ===
   - title: Filter Data
     type: task-group
-    description: >-
-      Filter subject trajectories by location and by segment length, duration, and speed.
-      Data points outside these bounds are removed, reducing noise.
+    description: ""
     tasks:
       - name: Filters
         id: subject_filters

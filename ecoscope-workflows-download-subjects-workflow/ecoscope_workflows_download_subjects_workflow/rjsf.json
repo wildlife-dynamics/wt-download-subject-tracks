@@ -122,7 +122,7 @@
     },
     "Filter Data": {
       "type": "object",
-      "description": "Filter subject trajectories by location and by segment length, duration, and speed. Data points outside these bounds are removed, reducing noise.",
+      "description": "",
       "ecoscope:task_group": true,
       "properties": {
         "subject_filters": {
@@ -293,63 +293,83 @@
       "ecoscope:task_group": true,
       "properties": {
         "download_params": {
-          "additionalProperties": false,
+          "additionalProperties": true,
           "properties": {
             "track_filetypes": {
+              "title": "Track Filetypes",
+              "description": "The output format for the subject track files.",
+              "type": "array",
               "default": [
                 "parquet"
               ],
+              "uniqueItems": true,
               "items": {
+                "type": "string",
                 "enum": [
                   "csv",
                   "parquet"
-                ],
-                "type": "string"
-              },
-              "title": "Track Filetypes",
-              "type": "array",
-              "description": "The output format for the subject track files.",
-              "uniqueItems": true
+                ]
+              }
             },
             "download_gps_points": {
-              "default": false,
               "title": "Download GPS points",
-              "type": "boolean"
-            },
-            "gps_point_filetypes": {
-              "default": [
-                "parquet"
-              ],
-              "items": {
-                "enum": [
-                  "csv",
-                  "parquet"
-                ],
-                "type": "string"
-              },
-              "title": "GPS Point Filetypes",
-              "type": "array",
-              "description": "The output format for the GPS point (relocation) files.",
-              "uniqueItems": true
+              "type": "boolean",
+              "default": false
             },
             "track_filename_prefix": {
-              "default": "subject_tracks",
               "title": "Track filename prefix",
-              "type": "string",
               "description": "A name added to the beginning of your track output files. A unique ID is automatically added to the end to prevent duplicates.",
+              "type": "string",
+              "default": "subject_tracks",
               "ecoscope:advanced": true
             },
             "gps_point_filename_prefix": {
-              "default": "relocations",
               "title": "GPS point filename prefix",
-              "type": "string",
               "description": "A name added to the beginning of your GPS point output files. A unique ID is automatically added to the end to prevent duplicates.",
+              "type": "string",
+              "default": "relocations",
               "ecoscope:advanced": true
             }
           },
           "type": "object",
           "required": [],
-          "title": "Download Configuration"
+          "title": "Download Configuration",
+          "dependencies": {
+            "download_gps_points": {
+              "oneOf": [
+                {
+                  "properties": {
+                    "download_gps_points": {
+                      "const": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "download_gps_points": {
+                      "const": true
+                    },
+                    "gps_point_filetypes": {
+                      "title": "GPS Point Filetypes",
+                      "description": "The output format for the GPS point (relocation) files.",
+                      "type": "array",
+                      "default": [
+                        "parquet"
+                      ],
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "csv",
+                          "parquet"
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
         }
       }
     },
