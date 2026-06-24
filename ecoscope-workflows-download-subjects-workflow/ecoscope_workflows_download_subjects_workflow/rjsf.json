@@ -74,7 +74,7 @@
         "subject_group_name": {
           "title": "Subject Group Name",
           "type": "string",
-          "description": "Specify the subject group to download observations for. Enter the exact \"Subject Group\" name as it appears in EarthRanger (e.g. \"Ecoscope\"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations \u2192 Subject groups",
+          "description": "Enter the exact \"Subject Group\" name as it appears in EarthRanger (e.g. \"Rangers\"). Subject group names can be found in your EarthRanger Admin site under Observations \u2192 Subject groups",
           "ecoscope:transform": [
             {
               "transformer": "EarthRangerEnumResolver",
@@ -89,36 +89,52 @@
           "default": false,
           "title": "Include Observation Details",
           "type": "boolean",
-          "description": "Whether or not to include observation details",
+          "description": "",
           "ecoscope:advanced": true
         },
         "include_subjectsource_details": {
           "default": false,
           "title": "Include Subject Source Details",
           "type": "boolean",
-          "description": "Whether or not to include subject source details",
+          "description": "",
           "ecoscope:advanced": true
         },
         "filter": {
-          "default": "clean",
-          "enum": [
-            "none",
-            "clean",
-            "manually_filtered",
-            "automatically_filtered",
-            "manually_and_automatically_filtered"
-          ],
           "title": "Filter",
-          "type": "string",
           "description": "Filter observations based on exclusion flags.",
-          "ecoscope:advanced": true
+          "type": "string",
+          "default": "clean",
+          "ecoscope:advanced": true,
+          "oneOf": [
+            {
+              "const": "none",
+              "title": "None"
+            },
+            {
+              "const": "clean",
+              "title": "Clean"
+            },
+            {
+              "const": "manually_filtered",
+              "title": "Manually filtered"
+            },
+            {
+              "const": "automatically_filtered",
+              "title": "Automatically filtered"
+            },
+            {
+              "const": "manually_and_automatically_filtered",
+              "title": "Manually and automatically filtered"
+            }
+          ]
         }
       },
       "required": [
         "subject_group_name"
       ],
       "type": "object",
-      "title": "Get Subject Group Observations from EarthRanger"
+      "title": "Subject Group",
+      "description": "Choose the subject group to download,"
     },
     "Filter Data": {
       "type": "object",
@@ -333,7 +349,7 @@
           },
           "type": "object",
           "required": [],
-          "title": "Download Configuration",
+          "title": "",
           "dependencies": {
             "download_gps_points": {
               "oneOf": [
@@ -862,10 +878,7 @@
           "gps_point_filetypes",
           "track_filename_prefix",
           "gps_point_filename_prefix"
-        ],
-        "download_gps_points": {
-          "ui:help": "Include individual GPS points with the track."
-        }
+        ]
       }
     },
     "Generate Maps": {

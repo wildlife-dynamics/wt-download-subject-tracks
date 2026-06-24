@@ -19,13 +19,39 @@ requirements:
 
 rjsf-overrides:
   properties:
+    # --- Subject Group card (get_subjectgroup_observations) ---
+    subject_obs.title: "Subject Group"
+    subject_obs.description: "Choose the subject group to download,"
     subject_obs.properties.subject_group_name.description: >-
-      Specify the subject group to download observations for. Enter the exact "Subject Group" name as it appears in EarthRanger (e.g. "Ecoscope"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations → Subject groups
+      Enter the exact "Subject Group" name as it appears in EarthRanger (e.g. "Rangers"). Subject group names can be found in your EarthRanger Admin site under Observations → Subject groups
     subject_obs.properties.subject_group_name.ecoscope:transform:
       - transformer: EarthRangerEnumResolver
         transformer_kws:
           type: subject_group_name
           depends_on: properties.er_client_name.properties.data_source.properties.name
+    # Drop redundant checkbox hints — the titles are self-explanatory.
+    subject_obs.properties.include_details.description: ""
+    subject_obs.properties.include_subjectsource_details.description: ""
+    # Pretty display labels for the exclusion-flag filter. Replace the enum wholesale with a
+    # oneOf of const/title pairs (same labeled-select pattern as ValueGrouper.index_name);
+    # the submitted value stays the raw const string, which the task's Literal still accepts.
+    subject_obs.properties.filter:
+      title: "Filter"
+      description: "Filter observations based on exclusion flags."
+      type: string
+      default: "clean"
+      "ecoscope:advanced": true
+      oneOf:
+        - const: "none"
+          title: "None"
+        - const: "clean"
+          title: "Clean"
+        - const: "manually_filtered"
+          title: "Manually filtered"
+        - const: "automatically_filtered"
+          title: "Automatically filtered"
+        - const: "manually_and_automatically_filtered"
+          title: "Manually and automatically filtered"
 
     # --- Filter Data: combined filter config (one card) ---
     Filter Data.properties.subject_filters.title: ""
@@ -54,6 +80,8 @@ rjsf-overrides:
       Write a SQL query to filter or transform your subject trajectory data. Leave blank to skip this step. Use df as the table name (e.g., SELECT * FROM df WHERE status = 'active'). Note that queries only apply to your downloaded files and not the generated map.
 
     # --- Download File Format: combined download config (one card + Advanced disclosure) ---
+    # Drop the redundant "Download Configuration" task subhead; the card title is enough.
+    Download File Format.properties.download_params.title: ""
     # Replace download_params.properties wholesale to DROP gps_point_filetypes from the
     # always-on fields; it is re-introduced below via a schema `dependencies` block so it
     # only renders once "Download GPS points" is checked. (Compiler overrides can add/replace
@@ -141,9 +169,6 @@ rjsf-overrides:
   uiSchema:
     # coordinate-filter array lives on the combined filter config task
     Filter Data.subject_filters.filter_point_coords.items.ui:options.label: false
-    # checkbox helper text → ui:help renders BELOW the checkbox (not above)
-    Download File Format.download_params.download_gps_points.ui:help: >-
-      Include individual GPS points with the track.
     Generate Maps.base_map_defs.base_maps.items.ui:options.label: false
     Generate Maps.generate_maps.value.ui:help: >-
       Not recommended for large datasets to improve performance.
