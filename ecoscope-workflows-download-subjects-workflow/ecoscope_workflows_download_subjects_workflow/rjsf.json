@@ -313,7 +313,6 @@
           "properties": {
             "track_filetypes": {
               "title": "Track Filetypes",
-              "description": "The output format for the subject track files.",
               "type": "array",
               "default": [
                 "parquet"
@@ -367,7 +366,6 @@
                     },
                     "gps_point_filetypes": {
                       "title": "GPS Point Filetypes",
-                      "description": "The output format for the GPS point (relocation) files.",
                       "type": "array",
                       "uniqueItems": true,
                       "items": {
