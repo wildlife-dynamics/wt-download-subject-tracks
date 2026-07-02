@@ -1,10 +1,14 @@
 id: download_subjects
+
 requirements:
   - name: ecoscope-platform
     version: ">=2.15.0, <2.16.0"
     channel: https://repo.prefix.dev/ecoscope-workflows/
+  # rc10 ships the combined filter config + the three filter splitters, the
+  # set_download_params config + its five splitters, plus the shared apply_sql_query
+  # sanitize + invert_bool tasks.
   - name: ecoscope-workflows-ext-custom
-    version: "0.1.0rc8"
+    version: ">=0.1.0rc14"
     channel: https://repo.prefix.dev/ecoscope-workflows-custom/
   # ecoscope-platform already declares this exact pydeck dependency. it is
   # re-stated here as a workaround for a known issue. for further detail, see:
@@ -12,33 +16,137 @@ requirements:
   - name: pydeck
     version: 0.9.2
     channel: conda-forge
+
 rjsf-overrides:
   properties:
+    # --- Subject Group card (get_subjectgroup_observations) ---
+    subject_obs.title: "Subject Group"
+    subject_obs.description: "Choose the subject group to download,"
     subject_obs.properties.subject_group_name.description: >-
-      Specify the subject group to download observations for. Enter the exact "Subject Group" name as it appears in EarthRanger (e.g. "Ecoscope"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations → Subject groups
+      Enter the exact "Subject Group" name as it appears in EarthRanger (e.g. "Rangers"). Subject group names can be found in your EarthRanger Admin site under Observations → Subject groups
     subject_obs.properties.subject_group_name.ecoscope:transform:
       - transformer: EarthRangerEnumResolver
         transformer_kws:
           type: subject_group_name
           depends_on: properties.er_client_name.properties.data_source.properties.name
-    Generate Maps.properties.skip_map_generation.properties.skip.description: >-
-      Skip generating maps for subject tracks. Recommended for large datasets to improve performance.
-    Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
-    Persist Relocations.properties.skip_relocation_persist.properties.skip.default: true
-    Persist Relocations.properties.skip_relocation_persist.properties.skip.description: >-
-      Skip persisting relocation data. Uncheck to save raw relocations (before trajectory conversion) as files.
-    Persist Relocations.properties.persist_relocations.properties.filename_prefix.default: "relocations"
-    Persist Relocations.properties.persist_relocations.properties.filetypes.default: ["parquet"]
-    Persist Relocations.properties.persist_relocations.properties.filetypes.items.enum: ["csv", "parquet"]
-    persist_tracks.properties.filename_prefix.default: "subject_tracks"
-    persist_tracks.properties.filetypes.default: ["parquet"]
-    persist_tracks.properties.filetypes.items.enum: ["csv", "parquet"]
-    Process Observations.properties.customize_columns.properties.drop_columns.default: ["location", "patrol_serial_number", "patrol_status", "patrol_subject", "patrol_type__value", "subject__content_type", "subject__device_status_properties", "subject__user", "subject__common_name", "subject__country", "subject__created_at", "subject__image_url", "subject__last_position", "subject__last_position_date", "subject__last_position_status", "subject__tracks_available", "subject__updated_at", "subject__url", "subjectsource__additional", "subjectsource__location", "subjectsource__source", "subjectsource__subject"]
-    Process Observations.properties.customize_columns.properties.drop_columns.description: >-
+    # Drop redundant checkbox hints — the titles are self-explanatory.
+    subject_obs.properties.include_details.description: ""
+    subject_obs.properties.include_subjectsource_details.description: ""
+    # Pretty display labels for the exclusion-flag filter. Replace the enum wholesale with a
+    # oneOf of const/title pairs (same labeled-select pattern as ValueGrouper.index_name);
+    # the submitted value stays the raw const string, which the task's Literal still accepts.
+    subject_obs.properties.filter:
+      title: "Filter"
+      description: "Filter observations based on exclusion flags."
+      type: string
+      default: "clean"
+      "ecoscope:advanced": true
+      oneOf:
+        - const: "none"
+          title: "None"
+        - const: "clean"
+          title: "Clean"
+        - const: "manually_filtered"
+          title: "Manually filtered"
+        - const: "automatically_filtered"
+          title: "Automatically filtered"
+        - const: "manually_and_automatically_filtered"
+          title: "Manually and automatically filtered"
+
+    # --- Filter Data: combined filter config (one card) ---
+    Filter Data.properties.subject_filters.title: ""
+    Filter Data.properties.subject_filters.properties.bounding_box.description: >-
+      Only include subject observations whose coordinates fall inside this bounding box.
+    Filter Data.properties.subject_filters.properties.filter_point_coords.description: >-
+      Exclude observations recorded at these exact coordinates (e.g. known bad GPS fixes).
+    Filter Data.properties.subject_filters.properties.trajectory_segment_filter.description: >-
+      Drop trajectory segments outside these length / time / speed bounds (e.g. to remove implausible jumps).
+
+    # --- Refine Data: Process Columns (drop columns; post-split, downloads-only) ---
+    Refine Data.properties.customize_columns.properties.drop_columns.default: ["location", "patrol_serial_number", "patrol_status", "patrol_subject", "patrol_type__value", "subject__content_type", "subject__device_status_properties", "subject__user", "subject__common_name", "subject__country", "subject__created_at", "subject__image_url", "subject__last_position", "subject__last_position_date", "subject__last_position_status", "subject__tracks_available", "subject__updated_at", "subject__url", "subjectsource__additional", "subjectsource__location", "subjectsource__source", "subjectsource__subject"]
+    Refine Data.properties.customize_columns.properties.drop_columns.description: >-
       Columns to drop from the subject dataset, with defaults based on common Ecoscope practices. Modify the list based on your requirements.
-    Process Observations.properties.groupers.properties.groupers.items.anyOf:
+
+    # --- Group Data: grouper override ---
+    Group Data.properties.groupers.title: ""
+    Group Data.properties.groupers.properties.groupers.description: ""
+    Group Data.properties.groupers.properties.groupers.items.anyOf:
       - {"$ref": "#/$defs/ValueGrouper"}
       - {"$ref": "#/$defs/TemporalGrouper"}
+
+    # --- Refine Data: trajectory SQL query (post-split, downloads-only) ---
+    Refine Data.properties.sql_query.properties.query.title: "SQL Query"
+    Refine Data.properties.sql_query.properties.query.description: >-
+      Write a SQL query to filter or transform your subject trajectory data. Leave blank to skip this step. Use df as the table name (e.g., SELECT * FROM df WHERE status = 'active'). Note that queries only apply to your downloaded files and not the generated map.
+
+    # --- Download File Format: combined download config (one card + Advanced disclosure) ---
+    # Drop the redundant "Download Configuration" task subhead; the card title is enough.
+    Download File Format.properties.download_params.title: ""
+    # Replace download_params.properties wholesale to DROP gps_point_filetypes from the
+    # always-on fields; it is re-introduced below via a schema `dependencies` block so it
+    # only renders once "Download GPS points" is checked. (Compiler overrides can add/replace
+    # but not delete keys, so the field is removed by restating the properties block.)
+    Download File Format.properties.download_params.properties:
+      track_filetypes:
+        title: "Track Filetypes"
+        type: array
+        default: ["parquet"]
+        uniqueItems: true
+        items:
+          type: string
+          enum: ["csv", "parquet"]
+      download_gps_points:
+        title: "Download GPS points"
+        type: boolean
+        default: false
+      track_filename_prefix:
+        title: "Track filename prefix"
+        description: "A name added to the beginning of your track output files. A unique ID is automatically added to the end to prevent duplicates."
+        type: string
+        default: "subject_tracks"
+        "ecoscope:advanced": true
+      gps_point_filename_prefix:
+        title: "GPS point filename prefix"
+        description: "A name added to the beginning of your GPS point output files. A unique ID is automatically added to the end to prevent duplicates."
+        type: string
+        default: "relocations"
+        "ecoscope:advanced": true
+    # NOTE: do NOT override additionalProperties. The ecoscope-web renderer flips an object
+    # into a free-form "Key/value + Add" map editor whenever additionalProperties is truthy,
+    # which mangles every field. Left at the compiled default (false), the object renders
+    # normally and the dependency below still surfaces gps_point_filetypes when checked.
+    # Show gps_point_filetypes ONLY when download_gps_points is checked (schema dependency).
+    Download File Format.properties.download_params.dependencies:
+      download_gps_points:
+        oneOf:
+          - properties:
+              download_gps_points:
+                const: false
+          - properties:
+              download_gps_points:
+                const: true
+              gps_point_filetypes:
+                title: "GPS Point Filetypes"
+                type: array
+                # No `default` here: a default on a conditional (dependency) branch gets
+                # seeded into formData even while the false branch is active, leaving an
+                # orphaned value that renders as a broken "additional property" editor when
+                # the box is unchecked. The task signature still defaults to ["parquet"] at
+                # runtime if the user leaves it empty.
+                uniqueItems: true
+                items:
+                  type: string
+                  enum: ["csv", "parquet"]
+
+    # --- Generate Maps ---
+    # Drop the redundant task header; the checkbox label (value.title) is enough. Blank
+    # the native invert_bool description so it does NOT render above the checkbox; helper
+    # text is supplied below via uiSchema ui:help.
+    Generate Maps.properties.generate_maps.title: ""
+    Generate Maps.properties.generate_maps.properties.value.title: "Generate maps in dashboard"
+    Generate Maps.properties.generate_maps.properties.value.default: true
+    Generate Maps.properties.generate_maps.properties.value.description: ""
+    Generate Maps.properties.base_map_defs.properties.base_maps.title: "Map Base Layers"
 
   $defs:
     ValueGrouper:
@@ -57,8 +165,12 @@ rjsf-overrides:
               title: "Subject Sex"
 
   uiSchema:
-    Process Observations.filter_obs.filter_point_coords.items.ui:options.label: false
-    base_map_defs.base_maps.items.ui:options.label: false
+    # coordinate-filter array lives on the combined filter config task
+    Filter Data.subject_filters.filter_point_coords.items.ui:options.label: false
+    Generate Maps.base_map_defs.base_maps.items.ui:options.label: false
+    Generate Maps.generate_maps.value.ui:help: >-
+      Not recommended for large datasets to improve performance.
+
 task-instance-defaults:
   skipif:
     conditions:
@@ -69,6 +181,10 @@ workflow:
   - name: Workflow Details
     id: workflow_details
     task: set_workflow_details
+
+  - name: Data Source
+    id: er_client_name
+    task: set_er_connection
 
   - name: Time Range
     id: time_range
@@ -81,10 +197,6 @@ workflow:
     task: get_timezone_from_time_range
     partial:
       time_range: ${{ workflow.time_range.return }}
-
-  - name: Data Source
-    id: er_client_name
-    task: set_er_connection
 
   # subject group observations
   - name: "Get Subject Group Observations from EarthRanger"
@@ -104,75 +216,99 @@ workflow:
     partial:
       subject_obs: ${{ workflow.subject_obs.return }}
 
-  - title: Process Observations
+  # === FILTER LOCATIONS / SEGMENTS (combined filter config + splitters) ===
+  - title: Filter Data
+    type: task-group
+    description: ""
+    tasks:
+      - name: Filters
+        id: subject_filters
+        task: set_traj_filters
+
+  # combined-filter splitters — all inputs via `partial`, so they render no form fields.
+  # Each returns ONE value (the compiler cannot subscript `.return[i]` in `${{ }}`).
+  # Node ids differ from the task names (the compiler forbids an id that matches a
+  # registered task name).
+  - name: Split Bounding Box
+    id: bounding_box
+    task: get_bounding_box
+    partial:
+      filters: ${{ workflow.subject_filters.return }}
+
+  - name: Split Point Coordinates
+    id: filter_point_coords
+    task: get_filter_point_coords
+    partial:
+      filters: ${{ workflow.subject_filters.return }}
+
+  - name: Split Segment Filter
+    id: segment_filter
+    task: get_segment_filter
+    partial:
+      filters: ${{ workflow.subject_filters.return }}
+
+  # --- trajectory branch (pre-split processing; param-less plain nodes, render nothing) ---
+  - name: "Convert to timezone"
+    id: convert_to_user_timezone
+    task: convert_values_to_timezone
+    partial:
+      df: ${{ workflow.subject_obs.return }}
+      timezone: ${{ workflow.get_timezone.return }}
+      columns: ["fixtime"]
+
+  - name: Remove Column Prefix Extra
+    id: drop_extra_prefix
+    task: drop_column_prefix
+    partial:
+      df: ${{ workflow.convert_to_user_timezone.return }}
+      prefix: "extra__"
+      duplicate_strategy: "suffix"
+
+  - name: Filter Observation Relocations
+    id: filter_obs
+    task: apply_reloc_coord_filter
+    partial:
+      df: ${{ workflow.drop_extra_prefix.return }}
+      bounding_box: ${{ workflow.bounding_box.return }}
+      filter_point_coords: ${{ workflow.filter_point_coords.return }}
+      roi_gdf: null
+      roi_name: null
+      reset_index: false
+
+  - name: Build Subject Trajectories
+    id: subject_traj
+    task: relocations_to_trajectory
+    partial:
+      relocations: ${{ workflow.filter_obs.return }}
+      trajectory_segment_filter: ${{ workflow.segment_filter.return }}
+
+  - name: Remove Column Prefix Extra
+    id: drop_extra_prefix_traj
+    task: drop_column_prefix
+    partial:
+      df: ${{ workflow.subject_traj.return }}
+      prefix: "extra__"
+      duplicate_strategy: "suffix"
+
+  - name: Internally Process Columns
+    id: customize_columns_internally
+    task: map_columns
+    partial:
+      df: ${{ workflow.drop_extra_prefix_traj.return }}
+      rename_columns: {}
+      drop_columns: ["id"] # drop 'id' to avoid conflict with `id` in the index
+      retain_columns: []
+      raise_if_not_found: false
+
+  # === GROUP DATA (set_groupers + temporal index + split; all pre-SQL) ===
+  # Column-dropping (Process Columns) moved post-split into Refine Data, so the temporal
+  # index keys off the internal column map (only `id` dropped) — grouping is unaffected.
+  - title: Group Data
     type: task-group
     description: >-
-      Process observations by applying filters, SQL queries, etc. Note that the data here includes all the columns from the previous steps and the normalized subject/observation details.
+      Configure how subject trajectories are grouped (by category or temporal index) and
+      split into per-group datasets for export and mapping.
     tasks:
-      - name: "Convert to timezone"
-        id: convert_to_user_timezone
-        task: convert_values_to_timezone
-        partial:
-          df: ${{ workflow.subject_obs.return }}
-          timezone: ${{ workflow.get_timezone.return }}
-          columns: ["fixtime"]
-
-      - name: Remove Column Prefix Extra
-        id: drop_extra_prefix
-        task: drop_column_prefix
-        partial:
-          df: ${{ workflow.convert_to_user_timezone.return }}
-          prefix: "extra__"
-          duplicate_strategy: "suffix"
-
-      - name: Filter Observation Relocations
-        id: filter_obs
-        task: apply_reloc_coord_filter
-        partial:
-          df: ${{ workflow.drop_extra_prefix.return }}
-          roi_gdf: null
-          roi_name: null
-          reset_index: false
-
-      - name: Trajectory Segment Filter
-        id: subject_traj
-        task: relocations_to_trajectory
-        partial:
-          relocations: ${{ workflow.filter_obs.return }}
-
-      - name: Remove Column Prefix Extra
-        id: drop_extra_prefix_traj
-        task: drop_column_prefix
-        partial:
-          df: ${{ workflow.subject_traj.return }}
-          prefix: "extra__"
-          duplicate_strategy: "suffix"
-
-      - name: Internally Process Columns
-        id: customize_columns_internally
-        task: map_columns
-        partial:
-          df: ${{ workflow.drop_extra_prefix_traj.return }}
-          rename_columns: {}
-          drop_columns: ["id"] # drop 'id' to avoid conflict with `id` in the index
-          retain_columns: []
-          raise_if_not_found: false
-
-      - name: Process Columns
-        id: customize_columns
-        task: map_columns
-        partial:
-          df: ${{ workflow.customize_columns_internally.return }}
-          rename_columns: {}
-          retain_columns: []
-          raise_if_not_found: false
-
-      - name: Apply SQL Query
-        id: sql_query
-        task: apply_sql_query
-        partial:
-          df: ${{ workflow.customize_columns.return }}
-
       - name: Group Data
         id: groupers
         task: set_groupers
@@ -198,7 +334,7 @@ workflow:
         id: traj_add_temporal_index
         task: add_temporal_index
         partial:
-          df: ${{ workflow.sql_query.return }}
+          df: ${{ workflow.customize_columns_internally.return }}
           time_col: "segment_start"
           groupers: ${{ workflow.groupers.return }}
           cast_to_datetime: true
@@ -211,36 +347,109 @@ workflow:
           df: ${{ workflow.traj_add_temporal_index.return }}
           groupers: ${{ workflow.groupers.return }}
 
-  - title: Persist Relocations
+  # === REFINE DATA (post-split, per-group, downloads-only): drop columns then SQL ===
+  - title: Refine Data
     type: task-group
     description: >-
-      Optionally persist raw relocation data (before trajectory conversion) as files.
+      Reshape and organize your subject trajectory data before downloading. Applies to the
+      downloaded files only — not the generated map.
     tasks:
-      - name: Skip Relocation Persistence
-        id: skip_relocation_persist
-        task: maybe_skip_df
+      - name: Process Columns
+        id: customize_columns
+        task: map_columns
+        partial:
+          rename_columns: {}
+          retain_columns: []
+          raise_if_not_found: false
         mapvalues:
           argnames: df
-          argvalues: ${{ workflow.split_relocs_groups.return }}
+          argvalues: ${{ workflow.split_traj_groups.return }}
 
-      - name: " "
-        id: persist_relocations
-        task: persist_grouped_dfs_for_results_download
+      - name: Apply SQL Query
+        id: sql_query
+        task: apply_sql_query
         partial:
-          root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+          # Hide both the columns whitelist and the sanitize toggle from the form —
+          # default-on sanitize makes the whitelist unnecessary, and sanitize is fixed
+          # on so SQL "just works" on complex/RGBA columns.
           sanitize: true
-          grouped_dfs: ${{ workflow.skip_relocation_persist.return }}
-        skipif:
-          conditions:
-            - never
+          columns: null
+        mapvalues:
+          argnames: df
+          argvalues: ${{ workflow.customize_columns.return }}
+
+  # === DOWNLOAD FILE FORMAT (combined download config + splitters) ===
+  - title: Download File Format
+    type: task-group
+    description: >-
+      Choose the file format for your download. Parquet files are compact, fast to query, and keep all your data in a single file. Works with Python, R, QGIS, and other GIS tools.
+    tasks:
+      - name: Download Configuration
+        id: download_params
+        task: set_download_params
+
+  # download-config splitters — all inputs via `partial`, so they render no form fields.
+  - name: Split Track Filetypes
+    id: track_filetypes
+    task: get_track_filetypes
+    partial:
+      params: ${{ workflow.download_params.return }}
+
+  - name: Split Track Filename Prefix
+    id: track_filename_prefix
+    task: get_track_filename_prefix
+    partial:
+      params: ${{ workflow.download_params.return }}
+
+  - name: Split GPS Point Filetypes
+    id: gps_point_filetypes
+    task: get_gps_point_filetypes
+    partial:
+      params: ${{ workflow.download_params.return }}
+
+  - name: Split GPS Point Filename Prefix
+    id: gps_point_filename_prefix
+    task: get_gps_point_filename_prefix
+    partial:
+      params: ${{ workflow.download_params.return }}
+
+  - name: Split Relocation Persist Skip
+    id: relocation_skip
+    task: get_skip_relocation_persist
+    partial:
+      params: ${{ workflow.download_params.return }}
+
+  - name: Skip Relocation Persistence
+    id: skip_relocation_persist
+    task: maybe_skip_df
+    partial:
+      skip: ${{ workflow.relocation_skip.return }}
+    mapvalues:
+      argnames: df
+      argvalues: ${{ workflow.split_relocs_groups.return }}
+
+  - name: Persist Relocations
+    id: persist_relocations
+    task: persist_grouped_dfs_for_results_download
+    partial:
+      root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
+      sanitize: true
+      grouped_dfs: ${{ workflow.skip_relocation_persist.return }}
+      filetypes: ${{ workflow.gps_point_filetypes.return }}
+      filename_prefix: ${{ workflow.gps_point_filename_prefix.return }}
+    skipif:
+      conditions:
+        - never
 
   - name: Persist Subject Trajectories
     id: persist_tracks
     task: persist_grouped_dfs_for_results_download
     partial:
-      grouped_dfs: ${{ workflow.split_traj_groups.return }}
+      grouped_dfs: ${{ workflow.sql_query.return }}   # post-split SQL output (downloads)
       root_path: ${{ env.ECOSCOPE_WORKFLOWS_RESULTS }}
       sanitize: true
+      filetypes: ${{ workflow.track_filetypes.return }}
+      filename_prefix: ${{ workflow.track_filename_prefix.return }}
     skipif:
       conditions:
         - never
@@ -250,9 +459,17 @@ workflow:
     description: >-
       Generate maps to visualize the subject trajectories.
     tasks:
+      # positive "Generate maps in dashboard" toggle, chained ahead of the shared
+      # maybe_skip_df task (checked = generate; value=true → return=false → don't skip)
+      - name: Generate Maps in Dashboard
+        id: generate_maps
+        task: invert_bool
+
       - name: Skip Map Generation
         id: skip_map_generation
         task: maybe_skip_df
+        partial:
+          skip: ${{ workflow.generate_maps.return }}
         mapvalues:
           argnames: df
           argvalues: ${{ workflow.split_traj_groups.return }}

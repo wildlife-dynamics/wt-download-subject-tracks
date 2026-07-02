@@ -20,6 +20,21 @@
       "description": "Add information that will help to differentiate this workflow from another.",
       "title": "Workflow Details"
     },
+    "er_client_name": {
+      "additionalProperties": false,
+      "properties": {
+        "data_source": {
+          "$ref": "#/$defs/EarthRangerConnection",
+          "title": "",
+          "description": "Select one of your configured data sources."
+        }
+      },
+      "required": [
+        "data_source"
+      ],
+      "type": "object",
+      "title": "Data Source"
+    },
     "time_range": {
       "additionalProperties": false,
       "properties": {
@@ -53,28 +68,13 @@
       "description": "Choose the period of time to analyze.",
       "title": "Time Range"
     },
-    "er_client_name": {
-      "additionalProperties": false,
-      "properties": {
-        "data_source": {
-          "$ref": "#/$defs/EarthRangerConnection",
-          "title": "",
-          "description": "Select one of your configured data sources."
-        }
-      },
-      "required": [
-        "data_source"
-      ],
-      "type": "object",
-      "title": "Data Source"
-    },
     "subject_obs": {
       "additionalProperties": false,
       "properties": {
         "subject_group_name": {
           "title": "Subject Group Name",
           "type": "string",
-          "description": "Specify the subject group to download observations for. Enter the exact \"Subject Group\" name as it appears in EarthRanger (e.g. \"Ecoscope\"). If you are on Ecoscope Desktop, subject group names can be found in your EarthRanger Admin site under Observations \u2192 Subject groups",
+          "description": "Enter the exact \"Subject Group\" name as it appears in EarthRanger (e.g. \"Rangers\"). Subject group names can be found in your EarthRanger Admin site under Observations \u2192 Subject groups",
           "ecoscope:transform": [
             {
               "transformer": "EarthRangerEnumResolver",
@@ -89,43 +89,59 @@
           "default": false,
           "title": "Include Observation Details",
           "type": "boolean",
-          "description": "Whether or not to include observation details",
+          "description": "",
           "ecoscope:advanced": true
         },
         "include_subjectsource_details": {
           "default": false,
           "title": "Include Subject Source Details",
           "type": "boolean",
-          "description": "Whether or not to include subject source details",
+          "description": "",
           "ecoscope:advanced": true
         },
         "filter": {
-          "default": "clean",
-          "enum": [
-            "none",
-            "clean",
-            "manually_filtered",
-            "automatically_filtered",
-            "manually_and_automatically_filtered"
-          ],
           "title": "Filter",
-          "type": "string",
           "description": "Filter observations based on exclusion flags.",
-          "ecoscope:advanced": true
+          "type": "string",
+          "default": "clean",
+          "ecoscope:advanced": true,
+          "oneOf": [
+            {
+              "const": "none",
+              "title": "None"
+            },
+            {
+              "const": "clean",
+              "title": "Clean"
+            },
+            {
+              "const": "manually_filtered",
+              "title": "Manually filtered"
+            },
+            {
+              "const": "automatically_filtered",
+              "title": "Automatically filtered"
+            },
+            {
+              "const": "manually_and_automatically_filtered",
+              "title": "Manually and automatically filtered"
+            }
+          ]
         }
       },
       "required": [
         "subject_group_name"
       ],
       "type": "object",
-      "title": "Get Subject Group Observations from EarthRanger"
+      "title": "Subject Group",
+      "description": "Choose the subject group to download,"
     },
-    "Process Observations": {
+    "Filter Data": {
       "type": "object",
-      "description": "Process observations by applying filters, SQL queries, etc. Note that the data here includes all the columns from the previous steps and the normalized subject/observation details.",
+      "description": "",
       "ecoscope:task_group": true,
       "properties": {
-        "filter_obs": {
+        "subject_filters": {
           "additionalProperties": false,
           "properties": {
             "bounding_box": {
@@ -141,27 +157,32 @@
                 "max_x": 180.0
               },
               "title": "Bounding Box",
-              "description": "Filter events to inside these bounding coordinates.",
+              "description": "Only include subject observations whose coordinates fall inside this bounding box.",
               "ecoscope:advanced": true
             },
             "filter_point_coords": {
-              "default": [],
+              "default": [
+                {
+                  "y": 90.0,
+                  "x": 180.0
+                },
+                {
+                  "y": 0.0,
+                  "x": 0.0
+                },
+                {
+                  "y": 1.0,
+                  "x": 1.0
+                }
+              ],
               "items": {
                 "$ref": "#/$defs/Coordinate"
               },
               "title": "Filter Exact Point Coordinates",
               "type": "array",
-              "description": "By adding a filter, the workflow will not include events recorded at the specified coordinates.",
+              "description": "Exclude observations recorded at these exact coordinates (e.g. known bad GPS fixes).",
               "ecoscope:advanced": true
-            }
-          },
-          "required": [],
-          "type": "object",
-          "title": "Filter Observation Relocations"
-        },
-        "subject_traj": {
-          "additionalProperties": false,
-          "properties": {
+            },
             "trajectory_segment_filter": {
               "allOf": [
                 {
@@ -176,15 +197,54 @@
                 "min_speed_kmhr": 0.01,
                 "max_speed_kmhr": 500
               },
-              "title": " ",
-              "description": "Filter track data by setting limits on track segment length, duration, and speed. Segments outside these bounds are removed, reducing noise and to focus on meaningful movement patterns.",
+              "title": "Trajectory Filter",
+              "description": "Drop trajectory segments outside these length / time / speed bounds (e.g. to remove implausible jumps).",
               "ecoscope:advanced": true
             }
           },
-          "required": [],
           "type": "object",
-          "title": "Trajectory Segment Filter"
-        },
+          "required": [],
+          "title": ""
+        }
+      }
+    },
+    "Group Data": {
+      "type": "object",
+      "description": "Configure how subject trajectories are grouped (by category or temporal index) and split into per-group datasets for export and mapping.",
+      "ecoscope:task_group": true,
+      "properties": {
+        "groupers": {
+          "additionalProperties": false,
+          "properties": {
+            "groupers": {
+              "default": null,
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ValueGrouper"
+                  },
+                  {
+                    "$ref": "#/$defs/TemporalGrouper"
+                  }
+                ],
+                "title": "Group by"
+              },
+              "title": " ",
+              "type": "array",
+              "description": ""
+            }
+          },
+          "type": "object",
+          "required": [],
+          "title": ""
+        }
+      }
+    },
+    "Refine Data": {
+      "type": "object",
+      "description": "Reshape and organize your subject trajectory data before downloading. Applies to the downloaded files only \u2014 not the generated map.",
+      "ecoscope:task_group": true,
+      "properties": {
         "customize_columns": {
           "additionalProperties": false,
           "properties": {
@@ -233,152 +293,115 @@
               "default": "",
               "title": "SQL Query",
               "type": "string",
-              "description": "SQL query string to apply to the DataFrame. Leaves it unchanged when the field is emptyUse 'df' as the table name in the query.",
-              "ecoscope:advanced": true
-            },
-            "columns": {
-              "default": null,
-              "items": {
-                "type": "string"
-              },
-              "title": "Columns",
-              "type": "array",
-              "description": "Optional list of column names to include in the SQL query context. If specified, only these columns will be available in the 'df' table for querying. Use this to exclude columns with unsupported data types (list, dict) that cannot be stored in SQLite. If not specified, all columns are included.",
+              "description": "Write a SQL query to filter or transform your subject trajectory data. Leave blank to skip this step. Use df as the table name (e.g., SELECT * FROM df WHERE status = 'active'). Note that queries only apply to your downloaded files and not the generated map.",
               "ecoscope:advanced": true
             }
           },
           "required": [],
           "type": "object",
           "title": "Apply SQL Query"
-        },
-        "groupers": {
-          "additionalProperties": false,
-          "properties": {
-            "groupers": {
-              "default": null,
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/ValueGrouper"
-                  },
-                  {
-                    "$ref": "#/$defs/TemporalGrouper"
-                  }
-                ],
-                "title": "Group by"
-              },
-              "title": " ",
-              "type": "array",
-              "description": "            Specify how the data should be grouped to create the views for your dashboard.\n            This field is optional; if left blank, all the data will appear in a single view.\n            "
-            }
-          },
-          "type": "object",
-          "required": [],
-          "title": "Group Data"
         }
       }
     },
-    "Persist Relocations": {
+    "Download File Format": {
       "type": "object",
-      "description": "Optionally persist raw relocation data (before trajectory conversion) as files.",
+      "description": "Choose the file format for your download. Parquet files are compact, fast to query, and keep all your data in a single file. Works with Python, R, QGIS, and other GIS tools.",
       "ecoscope:task_group": true,
       "properties": {
-        "skip_relocation_persist": {
+        "download_params": {
           "additionalProperties": false,
           "properties": {
-            "skip": {
-              "default": true,
-              "title": "Skip",
-              "type": "boolean",
-              "description": "Skip persisting relocation data. Uncheck to save raw relocations (before trajectory conversion) as files."
-            }
-          },
-          "required": [],
-          "type": "object",
-          "title": "Skip Relocation Persistence"
-        },
-        "persist_relocations": {
-          "additionalProperties": false,
-          "properties": {
-            "filetypes": {
+            "track_filetypes": {
+              "title": "Track Filetypes",
+              "type": "array",
               "default": [
                 "parquet"
               ],
+              "uniqueItems": true,
               "items": {
+                "type": "string",
                 "enum": [
                   "csv",
                   "parquet"
-                ],
-                "type": "string"
-              },
-              "title": "Filetypes",
-              "type": "array",
-              "description": "The output format",
-              "uniqueItems": true
+                ]
+              }
             },
-            "filename_prefix": {
-              "default": "relocations",
-              "title": "Filename Prefix",
+            "download_gps_points": {
+              "title": "Download GPS points",
+              "type": "boolean",
+              "default": false
+            },
+            "track_filename_prefix": {
+              "title": "Track filename prefix",
+              "description": "A name added to the beginning of your track output files. A unique ID is automatically added to the end to prevent duplicates.",
               "type": "string",
-              "description": "            Optional filename to persist text to within the `root_path`.\n            If not provided, a filename will be generated based on a hash of the df content.\n            ",
+              "default": "subject_tracks",
+              "ecoscope:advanced": true
+            },
+            "gps_point_filename_prefix": {
+              "title": "GPS point filename prefix",
+              "description": "A name added to the beginning of your GPS point output files. A unique ID is automatically added to the end to prevent duplicates.",
+              "type": "string",
+              "default": "relocations",
               "ecoscope:advanced": true
             }
           },
-          "required": [],
           "type": "object",
-          "title": " "
+          "required": [],
+          "title": "",
+          "dependencies": {
+            "download_gps_points": {
+              "oneOf": [
+                {
+                  "properties": {
+                    "download_gps_points": {
+                      "const": false
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "download_gps_points": {
+                      "const": true
+                    },
+                    "gps_point_filetypes": {
+                      "title": "GPS Point Filetypes",
+                      "type": "array",
+                      "uniqueItems": true,
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "csv",
+                          "parquet"
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
         }
       }
-    },
-    "persist_tracks": {
-      "additionalProperties": false,
-      "properties": {
-        "filetypes": {
-          "default": [
-            "parquet"
-          ],
-          "items": {
-            "enum": [
-              "csv",
-              "parquet"
-            ],
-            "type": "string"
-          },
-          "title": "Filetypes",
-          "type": "array",
-          "description": "The output format",
-          "uniqueItems": true
-        },
-        "filename_prefix": {
-          "default": "subject_tracks",
-          "title": "Filename Prefix",
-          "type": "string",
-          "description": "            Optional filename to persist text to within the `root_path`.\n            If not provided, a filename will be generated based on a hash of the df content.\n            ",
-          "ecoscope:advanced": true
-        }
-      },
-      "required": [],
-      "type": "object",
-      "title": "Persist Subject Trajectories"
     },
     "Generate Maps": {
       "type": "object",
       "description": "Generate maps to visualize the subject trajectories.",
       "ecoscope:task_group": true,
       "properties": {
-        "skip_map_generation": {
+        "generate_maps": {
           "additionalProperties": false,
           "properties": {
-            "skip": {
-              "default": false,
-              "title": "Skip",
+            "value": {
+              "default": true,
+              "title": "Generate maps in dashboard",
               "type": "boolean",
-              "description": "Skip generating maps for subject tracks. Recommended for large datasets to improve performance."
+              "description": ""
             }
           },
-          "required": [],
           "type": "object",
-          "title": "Skip Map Generation"
+          "required": [],
+          "title": ""
         },
         "base_map_defs": {
           "additionalProperties": false,
@@ -577,6 +600,19 @@
     }
   },
   "$defs": {
+    "EarthRangerConnection": {
+      "properties": {
+        "name": {
+          "title": "Data Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "EarthRangerConnection",
+      "type": "object"
+    },
     "TimezoneInfo": {
       "properties": {
         "label": {
@@ -603,19 +639,6 @@
         "utc"
       ],
       "title": "TimezoneInfo",
-      "type": "object"
-    },
-    "EarthRangerConnection": {
-      "properties": {
-        "name": {
-          "title": "Data Source",
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "title": "EarthRangerConnection",
       "type": "object"
     },
     "BoundingBox": {
@@ -823,18 +846,12 @@
         "filter"
       ]
     },
-    "Process Observations": {
-      "ui:order": [
-        "filter_obs",
-        "subject_traj",
-        "customize_columns",
-        "sql_query",
-        "groupers"
-      ],
-      "filter_obs": {
+    "Filter Data": {
+      "subject_filters": {
         "ui:order": [
           "bounding_box",
-          "filter_point_coords"
+          "filter_point_coords",
+          "trajectory_segment_filter"
         ],
         "filter_point_coords": {
           "items": {
@@ -843,57 +860,56 @@
             }
           }
         }
-      },
-      "sql_query": {
-        "ui:order": [
-          "query",
-          "columns"
-        ]
       }
     },
-    "Persist Relocations": {
+    "Refine Data": {
       "ui:order": [
-        "skip_relocation_persist",
-        "persist_relocations"
-      ],
-      "persist_relocations": {
-        "ui:order": [
-          "filetypes",
-          "filename_prefix"
-        ]
-      }
-    },
-    "persist_tracks": {
-      "ui:order": [
-        "filetypes",
-        "filename_prefix"
+        "customize_columns",
+        "sql_query"
       ]
+    },
+    "Download File Format": {
+      "download_params": {
+        "ui:order": [
+          "track_filetypes",
+          "download_gps_points",
+          "gps_point_filetypes",
+          "track_filename_prefix",
+          "gps_point_filename_prefix"
+        ]
+      }
     },
     "Generate Maps": {
       "ui:order": [
-        "skip_map_generation",
+        "generate_maps",
         "base_map_defs"
-      ]
+      ],
+      "base_map_defs": {
+        "base_maps": {
+          "items": {
+            "ui:options": {
+              "label": false
+            }
+          }
+        }
+      },
+      "generate_maps": {
+        "value": {
+          "ui:help": "Not recommended for large datasets to improve performance."
+        }
+      }
     },
     "ui:order": [
       "workflow_details",
-      "time_range",
       "er_client_name",
+      "time_range",
       "subject_obs",
-      "Process Observations",
-      "Persist Relocations",
-      "persist_tracks",
+      "Filter Data",
+      "Group Data",
+      "Refine Data",
+      "Download File Format",
       "Generate Maps"
-    ],
-    "base_map_defs": {
-      "base_maps": {
-        "items": {
-          "ui:options": {
-            "label": false
-          }
-        }
-      }
-    }
+    ]
   },
   "additionalProperties": false
 }

@@ -67,9 +67,40 @@ from ecoscope.platform.tasks.transformation import sort_values as sort_values
 from ecoscope.platform.tasks.warning import (
     mixed_subtype_warning as mixed_subtype_warning,
 )
+from ecoscope_workflows_ext_custom.tasks.config import (
+    get_bounding_box as get_bounding_box,
+)
+from ecoscope_workflows_ext_custom.tasks.config import (
+    get_filter_point_coords as get_filter_point_coords,
+)
+from ecoscope_workflows_ext_custom.tasks.config import (
+    get_gps_point_filename_prefix as get_gps_point_filename_prefix,
+)
+from ecoscope_workflows_ext_custom.tasks.config import (
+    get_gps_point_filetypes as get_gps_point_filetypes,
+)
+from ecoscope_workflows_ext_custom.tasks.config import (
+    get_segment_filter as get_segment_filter,
+)
+from ecoscope_workflows_ext_custom.tasks.config import (
+    get_skip_relocation_persist as get_skip_relocation_persist,
+)
+from ecoscope_workflows_ext_custom.tasks.config import (
+    get_track_filename_prefix as get_track_filename_prefix,
+)
+from ecoscope_workflows_ext_custom.tasks.config import (
+    get_track_filetypes as get_track_filetypes,
+)
+from ecoscope_workflows_ext_custom.tasks.config import (
+    set_download_params as set_download_params,
+)
+from ecoscope_workflows_ext_custom.tasks.config import (
+    set_traj_filters as set_traj_filters,
+)
 from ecoscope_workflows_ext_custom.tasks.io import (
     persist_grouped_dfs_for_results_download as persist_grouped_dfs_for_results_download,
 )
+from ecoscope_workflows_ext_custom.tasks.skip import invert_bool as invert_bool
 from ecoscope_workflows_ext_custom.tasks.skip import maybe_skip_df as maybe_skip_df
 from ecoscope_workflows_ext_custom.tasks.transformation import (
     apply_sql_query as apply_sql_query,
@@ -99,6 +130,23 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(**(params.get("workflow_details") or {}))
+        .call()
+    )
+
+    er_client_name = (
+        task(set_er_connection)
+        .validate()
+        .set_task_instance_id("er_client_name")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("er_client_name") or {}))
         .call()
     )
 
@@ -133,23 +181,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(time_range=time_range, **(params.get("get_timezone") or {}))
-        .call()
-    )
-
-    er_client_name = (
-        task(set_er_connection)
-        .validate()
-        .set_task_instance_id("er_client_name")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(**(params.get("er_client_name") or {}))
         .call()
     )
 
@@ -188,6 +219,74 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(subject_obs=subject_obs, **(params.get("warn_if_mixed_subtype") or {}))
+        .call()
+    )
+
+    subject_filters = (
+        task(set_traj_filters)
+        .validate()
+        .set_task_instance_id("subject_filters")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("subject_filters") or {}))
+        .call()
+    )
+
+    bounding_box = (
+        task(get_bounding_box)
+        .validate()
+        .set_task_instance_id("bounding_box")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(filters=subject_filters, **(params.get("bounding_box") or {}))
+        .call()
+    )
+
+    filter_point_coords = (
+        task(get_filter_point_coords)
+        .validate()
+        .set_task_instance_id("filter_point_coords")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(filters=subject_filters, **(params.get("filter_point_coords") or {}))
+        .call()
+    )
+
+    segment_filter = (
+        task(get_segment_filter)
+        .validate()
+        .set_task_instance_id("segment_filter")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(filters=subject_filters, **(params.get("segment_filter") or {}))
         .call()
     )
 
@@ -250,6 +349,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         )
         .partial(
             df=drop_extra_prefix,
+            bounding_box=bounding_box,
+            filter_point_coords=filter_point_coords,
             roi_gdf=None,
             roi_name=None,
             reset_index=False,
@@ -271,7 +372,11 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(relocations=filter_obs, **(params.get("subject_traj") or {}))
+        .partial(
+            relocations=filter_obs,
+            trajectory_segment_filter=segment_filter,
+            **(params.get("subject_traj") or {}),
+        )
         .call()
     )
 
@@ -318,46 +423,6 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             raise_if_not_found=False,
             **(params.get("customize_columns_internally") or {}),
         )
-        .call()
-    )
-
-    customize_columns = (
-        task(map_columns)
-        .validate()
-        .set_task_instance_id("customize_columns")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(
-            df=customize_columns_internally,
-            rename_columns={},
-            retain_columns=[],
-            raise_if_not_found=False,
-            **(params.get("customize_columns") or {}),
-        )
-        .call()
-    )
-
-    sql_query = (
-        task(apply_sql_query)
-        .validate()
-        .set_task_instance_id("sql_query")
-        .handle_errors()
-        .with_tracing()
-        .skipif(
-            conditions=[
-                any_is_empty_df,
-                any_dependency_skipped,
-            ],
-            unpack_depth=1,
-        )
-        .partial(df=customize_columns, **(params.get("sql_query") or {}))
         .call()
     )
 
@@ -437,7 +502,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            df=sql_query,
+            df=customize_columns_internally,
             time_col="segment_start",
             groupers=groupers,
             cast_to_datetime=True,
@@ -468,6 +533,149 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
         .call()
     )
 
+    customize_columns = (
+        task(map_columns)
+        .validate()
+        .set_task_instance_id("customize_columns")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            rename_columns={},
+            retain_columns=[],
+            raise_if_not_found=False,
+            **(params.get("customize_columns") or {}),
+        )
+        .mapvalues(argnames=["df"], argvalues=split_traj_groups)
+    )
+
+    sql_query = (
+        task(apply_sql_query)
+        .validate()
+        .set_task_instance_id("sql_query")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(sanitize=True, columns=None, **(params.get("sql_query") or {}))
+        .mapvalues(argnames=["df"], argvalues=customize_columns)
+    )
+
+    download_params = (
+        task(set_download_params)
+        .validate()
+        .set_task_instance_id("download_params")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("download_params") or {}))
+        .call()
+    )
+
+    track_filetypes = (
+        task(get_track_filetypes)
+        .validate()
+        .set_task_instance_id("track_filetypes")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(params=download_params, **(params.get("track_filetypes") or {}))
+        .call()
+    )
+
+    track_filename_prefix = (
+        task(get_track_filename_prefix)
+        .validate()
+        .set_task_instance_id("track_filename_prefix")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(params=download_params, **(params.get("track_filename_prefix") or {}))
+        .call()
+    )
+
+    gps_point_filetypes = (
+        task(get_gps_point_filetypes)
+        .validate()
+        .set_task_instance_id("gps_point_filetypes")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(params=download_params, **(params.get("gps_point_filetypes") or {}))
+        .call()
+    )
+
+    gps_point_filename_prefix = (
+        task(get_gps_point_filename_prefix)
+        .validate()
+        .set_task_instance_id("gps_point_filename_prefix")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(
+            params=download_params, **(params.get("gps_point_filename_prefix") or {})
+        )
+        .call()
+    )
+
+    relocation_skip = (
+        task(get_skip_relocation_persist)
+        .validate()
+        .set_task_instance_id("relocation_skip")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(params=download_params, **(params.get("relocation_skip") or {}))
+        .call()
+    )
+
     skip_relocation_persist = (
         task(maybe_skip_df)
         .validate()
@@ -481,7 +689,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(**(params.get("skip_relocation_persist") or {}))
+        .partial(skip=relocation_skip, **(params.get("skip_relocation_persist") or {}))
         .mapvalues(argnames=["df"], argvalues=split_relocs_groups)
     )
 
@@ -501,6 +709,8 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             sanitize=True,
             grouped_dfs=skip_relocation_persist,
+            filetypes=gps_point_filetypes,
+            filename_prefix=gps_point_filename_prefix,
             **(params.get("persist_relocations") or {}),
         )
         .call()
@@ -519,11 +729,30 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            grouped_dfs=split_traj_groups,
+            grouped_dfs=sql_query,
             root_path=os.environ["ECOSCOPE_WORKFLOWS_RESULTS"],
             sanitize=True,
+            filetypes=track_filetypes,
+            filename_prefix=track_filename_prefix,
             **(params.get("persist_tracks") or {}),
         )
+        .call()
+    )
+
+    generate_maps = (
+        task(invert_bool)
+        .validate()
+        .set_task_instance_id("generate_maps")
+        .handle_errors()
+        .with_tracing()
+        .skipif(
+            conditions=[
+                any_is_empty_df,
+                any_dependency_skipped,
+            ],
+            unpack_depth=1,
+        )
+        .partial(**(params.get("generate_maps") or {}))
         .call()
     )
 
@@ -540,7 +769,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             ],
             unpack_depth=1,
         )
-        .partial(**(params.get("skip_map_generation") or {}))
+        .partial(skip=generate_maps, **(params.get("skip_map_generation") or {}))
         .mapvalues(argnames=["df"], argvalues=split_traj_groups)
     )
 

@@ -20,6 +20,21 @@
       "description": "Add information that will help to differentiate this workflow from another.",
       "title": "Workflow Details"
     },
+    "er_client_name": {
+      "additionalProperties": false,
+      "properties": {
+        "data_source": {
+          "$ref": "#/$defs/EarthRangerConnection",
+          "title": "",
+          "description": "Select one of your configured data sources."
+        }
+      },
+      "required": [
+        "data_source"
+      ],
+      "type": "object",
+      "title": "Data Source"
+    },
     "time_range": {
       "additionalProperties": false,
       "properties": {
@@ -52,21 +67,6 @@
       "type": "object",
       "description": "Choose the period of time to analyze.",
       "title": "Time Range"
-    },
-    "er_client_name": {
-      "additionalProperties": false,
-      "properties": {
-        "data_source": {
-          "$ref": "#/$defs/EarthRangerConnection",
-          "title": "",
-          "description": "Select one of your configured data sources."
-        }
-      },
-      "required": [
-        "data_source"
-      ],
-      "type": "object",
-      "title": "Data Source"
     },
     "subject_obs": {
       "additionalProperties": false,
@@ -111,7 +111,7 @@
       "type": "object",
       "title": "Get Subject Group Observations from EarthRanger"
     },
-    "filter_obs": {
+    "subject_filters": {
       "additionalProperties": false,
       "properties": {
         "bounding_box": {
@@ -127,27 +127,32 @@
             "max_x": 180.0
           },
           "title": "Bounding Box",
-          "description": "Filter events to inside these bounding coordinates.",
+          "description": "Only include observations/events inside this bounding box.",
           "ecoscope:advanced": true
         },
         "filter_point_coords": {
-          "default": [],
+          "default": [
+            {
+              "y": 90.0,
+              "x": 180.0
+            },
+            {
+              "y": 0.0,
+              "x": 0.0
+            },
+            {
+              "y": 1.0,
+              "x": 1.0
+            }
+          ],
           "items": {
             "$ref": "#/$defs/Coordinate"
           },
           "title": "Filter Exact Point Coordinates",
           "type": "array",
-          "description": "By adding a filter, the workflow will not include events recorded at the specified coordinates.",
+          "description": "Exclude observations/events at these exact coordinates.",
           "ecoscope:advanced": true
-        }
-      },
-      "required": [],
-      "type": "object",
-      "title": "Filter Observation Relocations"
-    },
-    "subject_traj": {
-      "additionalProperties": false,
-      "properties": {
+        },
         "trajectory_segment_filter": {
           "allOf": [
             {
@@ -162,57 +167,14 @@
             "min_speed_kmhr": 0.01,
             "max_speed_kmhr": 500
           },
-          "title": " ",
-          "description": "Filter track data by setting limits on track segment length, duration, and speed. Segments outside these bounds are removed, reducing noise and to focus on meaningful movement patterns.",
+          "title": "Trajectory Filter",
+          "description": "Drop trajectory segments outside these length/time/speed bounds.",
           "ecoscope:advanced": true
         }
       },
-      "required": [],
       "type": "object",
-      "title": "Trajectory Segment Filter"
-    },
-    "customize_columns": {
-      "additionalProperties": false,
-      "properties": {
-        "drop_columns": {
-          "default": [],
-          "items": {
-            "type": "string"
-          },
-          "title": "Drop Columns",
-          "type": "array",
-          "description": "List of columns to drop.",
-          "ecoscope:advanced": true
-        }
-      },
       "required": [],
-      "type": "object",
-      "title": "Process Columns"
-    },
-    "sql_query": {
-      "additionalProperties": false,
-      "properties": {
-        "query": {
-          "default": "",
-          "title": "SQL Query",
-          "type": "string",
-          "description": "SQL query string to apply to the DataFrame. Leaves it unchanged when the field is emptyUse 'df' as the table name in the query.",
-          "ecoscope:advanced": true
-        },
-        "columns": {
-          "default": null,
-          "items": {
-            "type": "string"
-          },
-          "title": "Columns",
-          "type": "array",
-          "description": "Optional list of column names to include in the SQL query context. If specified, only these columns will be available in the 'df' table for querying. Use this to exclude columns with unsupported data types (list, dict) that cannot be stored in SQLite. If not specified, all columns are included.",
-          "ecoscope:advanced": true
-        }
-      },
-      "required": [],
-      "type": "object",
-      "title": "Apply SQL Query"
+      "title": "Filters"
     },
     "groupers": {
       "additionalProperties": false,
@@ -242,27 +204,44 @@
       "required": [],
       "title": "Group Data"
     },
-    "skip_relocation_persist": {
+    "customize_columns": {
       "additionalProperties": false,
       "properties": {
-        "skip": {
-          "default": false,
-          "title": "Skip",
-          "type": "boolean",
-          "description": "Skip the following tasks if True, returning a sentinel value."
+        "drop_columns": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Drop Columns",
+          "type": "array",
+          "description": "List of columns to drop.",
+          "ecoscope:advanced": true
         }
       },
       "required": [],
       "type": "object",
-      "title": "Skip Relocation Persistence"
+      "title": "Process Columns"
     },
-    "persist_relocations": {
+    "sql_query": {
       "additionalProperties": false,
       "properties": {
-        "filetypes": {
-          "default": [
-            "csv"
-          ],
+        "query": {
+          "default": "",
+          "title": "SQL Query",
+          "type": "string",
+          "description": "SQL query string to apply to the DataFrame. Leaves it unchanged when the field is emptyUse 'df' as the table name in the query.",
+          "ecoscope:advanced": true
+        }
+      },
+      "required": [],
+      "type": "object",
+      "title": "Apply SQL Query"
+    },
+    "download_params": {
+      "additionalProperties": false,
+      "properties": {
+        "track_filetypes": {
+          "default": null,
           "items": {
             "enum": [
               "csv",
@@ -272,30 +251,18 @@
             ],
             "type": "string"
           },
-          "title": "Filetypes",
+          "title": "Track Filetypes",
           "type": "array",
-          "description": "The output format",
+          "description": "The output format for the subject track files.",
           "uniqueItems": true
         },
-        "filename_prefix": {
+        "download_gps_points": {
+          "default": false,
+          "title": "Download GPS points",
+          "type": "boolean"
+        },
+        "gps_point_filetypes": {
           "default": null,
-          "title": "Filename Prefix",
-          "type": "string",
-          "description": "            Optional filename to persist text to within the `root_path`.\n            If not provided, a filename will be generated based on a hash of the df content.\n            ",
-          "ecoscope:advanced": true
-        }
-      },
-      "required": [],
-      "type": "object",
-      "title": " "
-    },
-    "persist_tracks": {
-      "additionalProperties": false,
-      "properties": {
-        "filetypes": {
-          "default": [
-            "csv"
-          ],
           "items": {
             "enum": [
               "csv",
@@ -305,36 +272,43 @@
             ],
             "type": "string"
           },
-          "title": "Filetypes",
+          "title": "GPS Point Filetypes",
           "type": "array",
-          "description": "The output format",
+          "description": "The output format for the GPS point (relocation) files.",
           "uniqueItems": true
         },
-        "filename_prefix": {
-          "default": null,
-          "title": "Filename Prefix",
+        "track_filename_prefix": {
+          "default": "subject_tracks",
+          "title": "Track filename prefix",
           "type": "string",
-          "description": "            Optional filename to persist text to within the `root_path`.\n            If not provided, a filename will be generated based on a hash of the df content.\n            ",
+          "description": "A name added to the beginning of your track output files. A unique ID is automatically added to the end to prevent duplicates.",
+          "ecoscope:advanced": true
+        },
+        "gps_point_filename_prefix": {
+          "default": "relocations",
+          "title": "GPS point filename prefix",
+          "type": "string",
+          "description": "A name added to the beginning of your GPS point output files. A unique ID is automatically added to the end to prevent duplicates.",
           "ecoscope:advanced": true
         }
       },
-      "required": [],
       "type": "object",
-      "title": "Persist Subject Trajectories"
+      "required": [],
+      "title": "Download Configuration"
     },
-    "skip_map_generation": {
+    "generate_maps": {
       "additionalProperties": false,
       "properties": {
-        "skip": {
-          "default": false,
-          "title": "Skip",
+        "value": {
+          "default": true,
+          "title": "Value",
           "type": "boolean",
-          "description": "Skip the following tasks if True, returning a sentinel value."
+          "description": "The boolean value to negate."
         }
       },
-      "required": [],
       "type": "object",
-      "title": "Skip Map Generation"
+      "required": [],
+      "title": "Generate Maps in Dashboard"
     },
     "base_map_defs": {
       "additionalProperties": false,
@@ -531,6 +505,19 @@
     }
   },
   "$defs": {
+    "EarthRangerConnection": {
+      "properties": {
+        "name": {
+          "title": "Data Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "EarthRangerConnection",
+      "type": "object"
+    },
     "TimezoneInfo": {
       "properties": {
         "label": {
@@ -557,19 +544,6 @@
         "utc"
       ],
       "title": "TimezoneInfo",
-      "type": "object"
-    },
-    "EarthRangerConnection": {
-      "properties": {
-        "name": {
-          "title": "Data Source",
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "title": "EarthRangerConnection",
       "type": "object"
     },
     "BoundingBox": {
@@ -766,44 +740,33 @@
         "filter"
       ]
     },
-    "filter_obs": {
+    "subject_filters": {
       "ui:order": [
         "bounding_box",
-        "filter_point_coords"
+        "filter_point_coords",
+        "trajectory_segment_filter"
       ]
     },
-    "sql_query": {
+    "download_params": {
       "ui:order": [
-        "query",
-        "columns"
-      ]
-    },
-    "persist_relocations": {
-      "ui:order": [
-        "filetypes",
-        "filename_prefix"
-      ]
-    },
-    "persist_tracks": {
-      "ui:order": [
-        "filetypes",
-        "filename_prefix"
+        "track_filetypes",
+        "download_gps_points",
+        "gps_point_filetypes",
+        "track_filename_prefix",
+        "gps_point_filename_prefix"
       ]
     },
     "ui:order": [
       "workflow_details",
-      "time_range",
       "er_client_name",
+      "time_range",
       "subject_obs",
-      "filter_obs",
-      "subject_traj",
+      "subject_filters",
+      "groupers",
       "customize_columns",
       "sql_query",
-      "groupers",
-      "skip_relocation_persist",
-      "persist_relocations",
-      "persist_tracks",
-      "skip_map_generation",
+      "download_params",
+      "generate_maps",
       "base_map_defs"
     ]
   },

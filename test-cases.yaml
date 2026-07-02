@@ -8,14 +8,13 @@ base:
     er_client_name:
       data_source:
         name: mep_dev
-    filter_obs:
+    subject_filters:
       bounding_box:
         min_y: -90
         max_y: 90
         min_x: -180
         max_x: 180
       filter_point_coords: []
-    subject_traj:
       trajectory_segment_filter:
         min_length_meters: 0.001
         max_length_meters: 10000.0
@@ -27,7 +26,6 @@ base:
       drop_columns: ["location", "patrol_serial_number", "patrol_status", "patrol_subject", "patrol_type__value", "subject__content_type", "subject__device_status_properties", "subject__user"]
     sql_query:
       query: ''
-      columns: []
     groupers:
       groupers: []
     time_range:
@@ -49,14 +47,12 @@ base:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           opacity: 0.5
           max_zoom: 17
-    skip_relocation_persist:
-      skip: false
-    persist_relocations:
-      filetypes: ["parquet"]
-      filename_prefix: "relocations"
-    persist_tracks:
-      filetypes: ["parquet", "csv"]
-      filename_prefix: "subject_tracks"
+    download_params:
+      download_gps_points: true
+      track_filetypes: ["parquet", "csv"]
+      track_filename_prefix: "subject_tracks"
+      gps_point_filetypes: ["parquet"]
+      gps_point_filename_prefix: "relocations"
 
 month-grouper:
   name: Test Case with a monthly grouper
@@ -81,13 +77,12 @@ month-grouper:
         - temporal_index: "%B"
     subject_obs:
       subject_group_name: "Ecoscope"
-    filter_obs:
+    subject_filters:
       filter_point_coords: [
         {"x": 180.0, "y": 90.0},
         {"x": 0.0, "y": 0.0},
         {"x": 1.0, "y": 1.0},
       ]
-    subject_traj:
       trajectory_segment_filter:
         min_length_meters: 0.001
         max_length_meters: 10000.0
@@ -95,9 +90,9 @@ month-grouper:
         min_time_secs: 1.0
         max_speed_kmhr: 10.0
         min_speed_kmhr: 0.01
-    persist_tracks:
-      filetypes: ["parquet", "csv"]
-      filename_prefix: "monthly_subject_tracks"
+    download_params:
+      track_filetypes: ["parquet", "csv"]
+      track_filename_prefix: "monthly_subject_tracks"
     base_map_defs:
       base_maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
@@ -128,13 +123,12 @@ with-details:
       subject_group_name: "Ecoscope"
       include_details: true
       include_subjectsource_details: true
-    filter_obs:
+    subject_filters:
       filter_point_coords: [
         {"x": 180.0, "y": 90.0},
         {"x": 0.0, "y": 0.0},
         {"x": 1.0, "y": 1.0},
       ]
-    subject_traj:
       trajectory_segment_filter:
         min_length_meters: 0.001
         max_length_meters: 10000.0
@@ -142,9 +136,9 @@ with-details:
         min_time_secs: 1.0
         max_speed_kmhr: 10.0
         min_speed_kmhr: 0.01
-    persist_tracks:
-      filetypes: ["parquet", "csv"]
-      filename_prefix: "subject_tracks_with_details"
+    download_params:
+      track_filetypes: ["parquet", "csv"]
+      track_filename_prefix: "subject_tracks_with_details"
     base_map_defs:
       base_maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
@@ -176,9 +170,9 @@ with-filter:
       filter: "manually_and_automatically_filtered"
     customize_columns:
       drop_columns: ["location", "subject__content_type", "subject__country"]
-    persist_tracks:
-      filetypes: ["parquet", "csv"]
-      filename_prefix: "subject_tracks_with_filter"
+    download_params:
+      track_filetypes: ["parquet", "csv"]
+      track_filename_prefix: "subject_tracks_with_filter"
     base_map_defs:
       base_maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
@@ -207,7 +201,7 @@ value-grouper:
         utc: "+03:00"
     subject_obs:
       subject_group_name: "Ecoscope"
-    subject_traj:
+    subject_filters:
       trajectory_segment_filter:
         min_length_meters: 0.001
         max_length_meters: 10000.0
@@ -218,9 +212,9 @@ value-grouper:
     groupers:
       groupers:
         - index_name: "subject__name"
-    persist_tracks:
-      filetypes: ["csv"]
-      filename_prefix: "subject_tracks_by_name"
+    download_params:
+      track_filetypes: ["csv"]
+      track_filename_prefix: "subject_tracks_by_name"
     base_map_defs:
       base_maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
@@ -246,7 +240,7 @@ sql-filter:
         utc: "+03:00"
     subject_obs:
       subject_group_name: "Ecoscope"
-    subject_traj:
+    subject_filters:
       trajectory_segment_filter:
         min_length_meters: 0.001
         max_length_meters: 10000.0
@@ -257,12 +251,11 @@ sql-filter:
     sql_query:
       query: >-
         SELECT * FROM df WHERE speed_kmhr > 1.0
-      columns: ["segment_start", "segment_end", "timespan_seconds", "dist_meters", "speed_kmhr", "heading", "geometry", "subject__name", "subject__sex", "subject__id", "groupby_col"]
     groupers:
       groupers: []
-    persist_tracks:
-      filetypes: ["csv"]
-      filename_prefix: "subject_tracks_fast"
+    download_params:
+      track_filetypes: ["csv"]
+      track_filename_prefix: "subject_tracks_fast"
     base_map_defs:
       base_maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
@@ -297,8 +290,8 @@ skip-maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           opacity: 0.5
           max_zoom: 17
-    skip_map_generation:
-      skip: true
+    generate_maps:
+      value: false
 
 no-subjectsource-details:
   name: No subjectsource details with default drop_columns
@@ -324,7 +317,7 @@ no-subjectsource-details:
       include_subjectsource_details: false
     customize_columns:
       drop_columns: ["location", "patrol_serial_number", "patrol_status", "patrol_subject", "patrol_type__value", "subject__content_type", "subject__device_status_properties", "subject__user", "subject__common_name", "subject__country", "subject__created_at", "subject__image_url", "subject__last_position", "subject__last_position_date", "subject__last_position_status", "subject__tracks_available", "subject__updated_at", "subject__url", "subjectsource__additional", "subjectsource__location", "subjectsource__source", "subjectsource__subject"]
-    subject_traj:
+    subject_filters:
       trajectory_segment_filter:
         min_length_meters: 0.001
         max_length_meters: 10000.0
@@ -332,9 +325,9 @@ no-subjectsource-details:
         min_time_secs: 1.0
         max_speed_kmhr: 10.0
         min_speed_kmhr: 0.01
-    persist_tracks:
-      filetypes: ["parquet"]
-      filename_prefix: "subject_tracks"
+    download_params:
+      track_filetypes: ["parquet"]
+      track_filename_prefix: "subject_tracks"
     base_map_defs:
       base_maps:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
@@ -342,5 +335,5 @@ no-subjectsource-details:
         - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           opacity: 0.5
           max_zoom: 17
-    skip_map_generation:
-      skip: true
+    generate_maps:
+      value: false
