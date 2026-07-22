@@ -84,18 +84,22 @@ rjsf-overrides:
     # dotted path). This drops gps_point_filetypes from the always-on fields AND omits the
     # compiled `additionalProperties: false`, both required for the allOf/if/then below.
     #
-    # Why if/then + unevaluatedProperties instead of `dependencies`: the server validates
-    # submitted formdata against this schema with Draft202012Validator, which ignores the
-    # legacy `dependencies` keyword — and in every draft, properties declared only inside a
+    # Why if/then instead of `dependencies`: the server validates submitted formdata
+    # against this schema with Draft202012Validator, which ignores the legacy
+    # `dependencies` keyword — and in every draft, properties declared only inside a
     # dependencies/then branch do NOT whitelist against additionalProperties: false, so
     # submits with gps_point_filetypes were rejected 422. if/then is understood by BOTH the
-    # RJSF renderer (conditional reveal, same UX as dependencies) and the 2020-12 validator;
-    # unevaluatedProperties: false restores strictness while seeing through the then-branch.
+    # RJSF renderer (conditional reveal, same UX as dependencies) and the 2020-12 validator.
     #
-    # Two traps if editing this block:
+    # Three traps if editing this block:
     # - additionalProperties: false alongside allOf/if/then makes RJSF's schema merge drop
     #   the conditional field entirely (never renders, even when checked). Any truthy value
     #   flips the ecoscope-web renderer into the key/value map editor. Omit the key.
+    # - No unevaluatedProperties: false either: RJSF's getDefaultFormState seeds
+    #   gps_point_filetypes: [] into formData from the FIRST render (box unchecked), and
+    #   retains the value after toggle-off — unevaluatedProperties: false 422s both. The
+    #   object must tolerate the key whenever present; the enum/type constraints in the
+    #   then-branch still apply when the box is checked.
     # - No `default` on gps_point_filetypes: a default on a conditional branch gets seeded
     #   into formData even while inactive, leaving an orphaned value. The task defaults to
     #   ["parquet"] at runtime if left empty.
@@ -103,7 +107,6 @@ rjsf-overrides:
       title: ""
       type: object
       required: []
-      unevaluatedProperties: false
       properties:
         track_filetypes:
           title: "Track Filetypes"
