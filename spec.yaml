@@ -80,29 +80,11 @@ rjsf-overrides:
       Write a SQL query to filter or transform your subject trajectory data. Leave blank to skip this step. Use df as the table name (e.g., SELECT * FROM df WHERE status = 'active'). Note that queries only apply to your downloaded files and not the generated map.
 
     # --- Download File Format: combined download config (one card + Advanced disclosure) ---
-    # Restate the ENTIRE download_params object (overrides replace the whole subtree at the
-    # dotted path). This drops gps_point_filetypes from the always-on fields AND omits the
-    # compiled `additionalProperties: false`, both required for the allOf/if/then below.
-    #
-    # Why if/then instead of `dependencies`: the server validates submitted formdata
-    # against this schema with Draft202012Validator, which ignores the legacy
-    # `dependencies` keyword — and in every draft, properties declared only inside a
-    # dependencies/then branch do NOT whitelist against additionalProperties: false, so
-    # submits with gps_point_filetypes were rejected 422. if/then is understood by BOTH the
-    # RJSF renderer (conditional reveal, same UX as dependencies) and the 2020-12 validator.
-    #
-    # Three traps if editing this block:
-    # - additionalProperties: false alongside allOf/if/then makes RJSF's schema merge drop
-    #   the conditional field entirely (never renders, even when checked). Any truthy value
-    #   flips the ecoscope-web renderer into the key/value map editor. Omit the key.
-    # - No unevaluatedProperties: false either: RJSF's getDefaultFormState seeds
-    #   gps_point_filetypes: [] into formData from the FIRST render (box unchecked), and
-    #   retains the value after toggle-off — unevaluatedProperties: false 422s both. The
-    #   object must tolerate the key whenever present; the enum/type constraints in the
-    #   then-branch still apply when the box is checked.
-    # - No `default` on gps_point_filetypes: a default on a conditional branch gets seeded
-    #   into formData even while inactive, leaving an orphaned value. The task defaults to
-    #   ["parquet"] at runtime if left empty.
+    # Restated wholesale to gate gps_point_filetypes behind the checkbox via allOf/if/then —
+    # the only conditional-field shape valid for both the RJSF renderer and the server's
+    # 2020-12 validator. Do NOT add `dependencies`, `additionalProperties`,
+    # `unevaluatedProperties`, or a `default` on the conditional field — each breaks a
+    # different layer (details: the PR that introduced this block / rjsf rendering rules).
     Download File Format.properties.download_params:
       title: ""
       type: object
