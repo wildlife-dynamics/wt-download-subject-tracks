@@ -80,59 +80,50 @@ rjsf-overrides:
       Write a SQL query to filter or transform your subject trajectory data. Leave blank to skip this step. Use df as the table name (e.g., SELECT * FROM df WHERE status = 'active'). Note that queries only apply to your downloaded files and not the generated map.
 
     # --- Download File Format: combined download config (one card + Advanced disclosure) ---
-    # Drop the redundant "Download Configuration" task subhead; the card title is enough.
-    Download File Format.properties.download_params.title: ""
-    # Replace download_params.properties wholesale to DROP gps_point_filetypes from the
-    # always-on fields; it is re-introduced below via a schema `dependencies` block so it
-    # only renders once "Download GPS points" is checked. (Compiler overrides can add/replace
-    # but not delete keys, so the field is removed by restating the properties block.)
-    Download File Format.properties.download_params.properties:
-      track_filetypes:
-        title: "Track Filetypes"
-        type: array
-        default: ["parquet"]
-        uniqueItems: true
-        items:
+    # Restated wholesale to gate gps_point_filetypes behind the checkbox via allOf/if/then —
+    # the only conditional-field shape valid for both the RJSF renderer and the server's
+    # 2020-12 validator. Do NOT add `dependencies`, `additionalProperties`,
+    # `unevaluatedProperties`, or a `default` on the conditional field — each breaks a
+    # different layer (details: the PR that introduced this block / rjsf rendering rules).
+    Download File Format.properties.download_params:
+      title: ""
+      type: object
+      required: []
+      properties:
+        track_filetypes:
+          title: "Track Filetypes"
+          type: array
+          default: ["parquet"]
+          uniqueItems: true
+          items:
+            type: string
+            enum: ["csv", "parquet"]
+        download_gps_points:
+          title: "Download GPS points"
+          type: boolean
+          default: false
+        track_filename_prefix:
+          title: "Track filename prefix"
+          description: "A name added to the beginning of your track output files. A unique ID is automatically added to the end to prevent duplicates."
           type: string
-          enum: ["csv", "parquet"]
-      download_gps_points:
-        title: "Download GPS points"
-        type: boolean
-        default: false
-      track_filename_prefix:
-        title: "Track filename prefix"
-        description: "A name added to the beginning of your track output files. A unique ID is automatically added to the end to prevent duplicates."
-        type: string
-        default: "subject_tracks"
-        "ecoscope:advanced": true
-      gps_point_filename_prefix:
-        title: "GPS point filename prefix"
-        description: "A name added to the beginning of your GPS point output files. A unique ID is automatically added to the end to prevent duplicates."
-        type: string
-        default: "relocations"
-        "ecoscope:advanced": true
-    # NOTE: do NOT override additionalProperties. The ecoscope-web renderer flips an object
-    # into a free-form "Key/value + Add" map editor whenever additionalProperties is truthy,
-    # which mangles every field. Left at the compiled default (false), the object renders
-    # normally and the dependency below still surfaces gps_point_filetypes when checked.
-    # Show gps_point_filetypes ONLY when download_gps_points is checked (schema dependency).
-    Download File Format.properties.download_params.dependencies:
-      download_gps_points:
-        oneOf:
-          - properties:
-              download_gps_points:
-                const: false
-          - properties:
+          default: "subject_tracks"
+          "ecoscope:advanced": true
+        gps_point_filename_prefix:
+          title: "GPS point filename prefix"
+          description: "A name added to the beginning of your GPS point output files. A unique ID is automatically added to the end to prevent duplicates."
+          type: string
+          default: "relocations"
+          "ecoscope:advanced": true
+      allOf:
+        - if:
+            properties:
               download_gps_points:
                 const: true
+          then:
+            properties:
               gps_point_filetypes:
                 title: "GPS Point Filetypes"
                 type: array
-                # No `default` here: a default on a conditional (dependency) branch gets
-                # seeded into formData even while the false branch is active, leaving an
-                # orphaned value that renders as a broken "additional property" editor when
-                # the box is unchecked. The task signature still defaults to ["parquet"] at
-                # runtime if the user leaves it empty.
                 uniqueItems: true
                 items:
                   type: string
