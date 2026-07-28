@@ -810,7 +810,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             unpack_depth=1,
         )
         .partial(
-            subject_id_column="subject__id",
+            subject_id_column="groupby_col",
             output_column="subject_colormap",
             fallback_strategy="default_color",
             default_color="#FFFF00",
