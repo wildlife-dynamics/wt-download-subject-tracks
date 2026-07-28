@@ -480,7 +480,7 @@ workflow:
         id: colormap_traj
         task: assign_subject_colors
         partial:
-          subject_id_column: "subject__id"
+          subject_id_column: "groupby_col"
           output_column: "subject_colormap"
           fallback_strategy: default_color
           default_color: "#FFFF00"
