@@ -103,6 +103,13 @@
           "type": "string",
           "description": "Filter observations based on exclusion flags.",
           "ecoscope:advanced": true
+        },
+        "include_subject_additional": {
+          "default": false,
+          "title": "Include Subject Additional",
+          "type": "boolean",
+          "description": "Whether or not to include the subject's free-form `additional` JSON",
+          "ecoscope:advanced": true
         }
       },
       "required": [
@@ -737,7 +744,8 @@
         "subject_group_name",
         "include_details",
         "include_subjectsource_details",
-        "filter"
+        "filter",
+        "include_subject_additional"
       ]
     },
     "subject_filters": {
