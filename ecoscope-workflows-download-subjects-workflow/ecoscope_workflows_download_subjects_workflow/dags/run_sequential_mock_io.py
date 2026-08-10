@@ -188,6 +188,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             client=er_client_name,
             time_range=time_range,
             raise_on_empty=False,
+            include_subject_additional=True,
             **(params.get("subject_obs") or {}),
         )
         .call()
