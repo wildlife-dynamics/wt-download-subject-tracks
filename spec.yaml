@@ -191,6 +191,9 @@ workflow:
       client: ${{ workflow.er_client_name.return }}
       time_range: ${{ workflow.time_range.return }}
       raise_on_empty: false
+      # always fetch the subject's free-form `additional` JSON — `assign_subject_colors`
+      # reads `subject__additional` for per-subject map colors.
+      include_subject_additional: true
 
   - name: Warn if mixed subtype
     id: warn_if_mixed_subtype
