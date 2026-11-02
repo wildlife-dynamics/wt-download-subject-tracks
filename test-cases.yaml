@@ -337,3 +337,77 @@ no-subjectsource-details:
           max_zoom: 17
     generate_maps:
       value: false
+
+sql-allowed-functions:
+  name: SQL Previously-Blocked Keywords and Window Function
+  mock_io: true
+  params:
+    workflow_details:
+      name: "Subject Tracking Dashboard"
+      description: "Queries the old keyword filter rejected, plus a subquery and window function."
+    er_client_name:
+      data_source:
+        name: "mep_dev"
+    time_range:
+      since: "2015-01-01T00:00:00Z"
+      until: "2015-01-07T23:59:59Z"
+    subject_obs:
+      subject_group_name: "Ecoscope"
+    sql_query:
+      # `replace()` and `created_at`/`updated_at` (a real trajectory column, and an
+      # alias) tripped the substring keyword blocklist that ecoscope#874 removed.
+      # The window function guards the authorizer's ALLOWED_FUNCTIONS. A subquery
+      # stands in for a CTE, which `validate_sql_query` still rejects (it requires
+      # a leading SELECT).
+      query: >-
+        SELECT *, row_number() OVER (PARTITION BY subject_key ORDER BY speed_kmhr DESC) AS speed_rank
+        FROM (
+          SELECT *, replace(groupby_col, '-', '_') AS subject_key,
+            created_at AS updated_at
+          FROM df
+          WHERE created_at IS NOT NULL
+        )
+    groupers:
+      groupers: []
+    download_params:
+      track_filetypes: ["csv"]
+      track_filename_prefix: "subject_tracks_sql_allowed"
+    generate_maps:
+      value: false
+    base_map_defs:
+      base_maps:
+        - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+          opacity: 1.0
+
+sql-csv-formula:
+  name: SQL CSV Formula Neutralization
+  mock_io: true
+  params:
+    workflow_details:
+      name: "Subject Tracking Dashboard"
+      description: "Formula-like cells and column labels in a CSV download."
+    er_client_name:
+      data_source:
+        name: "mep_dev"
+    time_range:
+      since: "2015-01-01T00:00:00Z"
+      until: "2015-01-07T23:59:59Z"
+    subject_obs:
+      subject_group_name: "Ecoscope"
+    sql_query:
+      # Smoke test only: the harness checks the run succeeds, not file contents.
+      # The CSV should carry these as '=1+1, '@SUM(1) and a '=label column.
+      query: >-
+        SELECT '=1+1' AS formula, '@SUM(1)' AS at_formula, groupby_col AS "=label", *
+        FROM df
+    groupers:
+      groupers: []
+    download_params:
+      track_filetypes: ["csv"]
+      track_filename_prefix: "subject_tracks_sql_formula"
+    generate_maps:
+      value: false
+    base_map_defs:
+      base_maps:
+        - url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+          opacity: 1.0

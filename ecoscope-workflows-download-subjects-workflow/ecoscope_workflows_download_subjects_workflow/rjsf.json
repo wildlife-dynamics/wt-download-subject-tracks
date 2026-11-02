@@ -25,8 +25,8 @@
       "properties": {
         "data_source": {
           "$ref": "#/$defs/EarthRangerConnection",
-          "title": "",
-          "description": "Select one of your configured data sources."
+          "description": "Select one of your configured data sources.",
+          "title": ""
         }
       },
       "required": [
@@ -39,23 +39,19 @@
       "additionalProperties": false,
       "properties": {
         "since": {
+          "description": "The start time",
           "format": "date-time",
           "title": "Since",
-          "type": "string",
-          "description": "The start time"
+          "type": "string"
         },
         "until": {
+          "description": "The end time",
           "format": "date-time",
           "title": "Until",
-          "type": "string",
-          "description": "The end time"
+          "type": "string"
         },
         "timezone": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/TimezoneInfo"
-            }
-          ],
+          "$ref": "#/$defs/TimezoneInfo",
           "default": null,
           "title": "Timezone"
         }
@@ -72,9 +68,9 @@
       "additionalProperties": false,
       "properties": {
         "subject_group_name": {
+          "description": "Enter the exact \"Subject Group\" name as it appears in EarthRanger (e.g. \"Rangers\"). Subject group names can be found in your EarthRanger Admin site under Observations \u2192 Subject groups",
           "title": "Subject Group Name",
           "type": "string",
-          "description": "Enter the exact \"Subject Group\" name as it appears in EarthRanger (e.g. \"Rangers\"). Subject group names can be found in your EarthRanger Admin site under Observations \u2192 Subject groups",
           "ecoscope:transform": [
             {
               "transformer": "EarthRangerEnumResolver",
@@ -87,17 +83,17 @@
         },
         "include_details": {
           "default": false,
-          "title": "Include Observation Details",
-          "type": "boolean",
           "description": "",
-          "ecoscope:advanced": true
+          "ecoscope:advanced": true,
+          "title": "Include Observation Details",
+          "type": "boolean"
         },
         "include_subjectsource_details": {
           "default": false,
-          "title": "Include Subject Source Details",
-          "type": "boolean",
           "description": "",
-          "ecoscope:advanced": true
+          "ecoscope:advanced": true,
+          "title": "Include Subject Source Details",
+          "type": "boolean"
         },
         "filter": {
           "title": "Filter",
@@ -145,20 +141,16 @@
           "additionalProperties": false,
           "properties": {
             "bounding_box": {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/BoundingBox"
-                }
-              ],
+              "$ref": "#/$defs/BoundingBox",
               "default": {
                 "min_y": -90.0,
                 "max_y": 90.0,
                 "min_x": -180.0,
                 "max_x": 180.0
               },
-              "title": "Bounding Box",
               "description": "Only include subject observations whose coordinates fall inside this bounding box.",
-              "ecoscope:advanced": true
+              "ecoscope:advanced": true,
+              "title": "Bounding Box"
             },
             "filter_point_coords": {
               "default": [
@@ -175,20 +167,16 @@
                   "x": 1.0
                 }
               ],
+              "description": "Exclude observations recorded at these exact coordinates (e.g. known bad GPS fixes).",
+              "ecoscope:advanced": true,
               "items": {
                 "$ref": "#/$defs/Coordinate"
               },
               "title": "Filter Exact Point Coordinates",
-              "type": "array",
-              "description": "Exclude observations recorded at these exact coordinates (e.g. known bad GPS fixes).",
-              "ecoscope:advanced": true
+              "type": "array"
             },
             "trajectory_segment_filter": {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/TrajectorySegmentFilter"
-                }
-              ],
+              "$ref": "#/$defs/TrajectorySegmentFilter",
               "default": {
                 "min_length_meters": 0.001,
                 "max_length_meters": 100000,
@@ -197,9 +185,9 @@
                 "min_speed_kmhr": 0.01,
                 "max_speed_kmhr": 500
               },
-              "title": "Trajectory Filter",
               "description": "Drop trajectory segments outside these length / time / speed bounds (e.g. to remove implausible jumps).",
-              "ecoscope:advanced": true
+              "ecoscope:advanced": true,
+              "title": "Trajectory Filter"
             }
           },
           "type": "object",
@@ -218,6 +206,7 @@
           "properties": {
             "groupers": {
               "default": null,
+              "description": "",
               "items": {
                 "anyOf": [
                   {
@@ -230,8 +219,7 @@
                 "title": "Group by"
               },
               "title": " ",
-              "type": "array",
-              "description": ""
+              "type": "array"
             }
           },
           "type": "object",
@@ -273,13 +261,13 @@
                 "subjectsource__source",
                 "subjectsource__subject"
               ],
+              "description": "Columns to drop from the subject dataset, with defaults based on common Ecoscope practices. Modify the list based on your requirements.",
+              "ecoscope:advanced": true,
               "items": {
                 "type": "string"
               },
               "title": "Drop Columns",
-              "type": "array",
-              "description": "Columns to drop from the subject dataset, with defaults based on common Ecoscope practices. Modify the list based on your requirements.",
-              "ecoscope:advanced": true
+              "type": "array"
             }
           },
           "required": [],
@@ -291,10 +279,10 @@
           "properties": {
             "query": {
               "default": "",
-              "title": "SQL Query",
-              "type": "string",
               "description": "Write a SQL query to filter or transform your subject trajectory data. Leave blank to skip this step. Use df as the table name (e.g., SELECT * FROM df WHERE status = 'active'). Note that queries only apply to your downloaded files and not the generated map.",
-              "ecoscope:advanced": true
+              "ecoscope:advanced": true,
+              "title": "SQL Query",
+              "type": "string"
             }
           },
           "required": [],
@@ -388,9 +376,9 @@
           "properties": {
             "value": {
               "default": true,
+              "description": "",
               "title": "Generate maps in dashboard",
-              "type": "boolean",
-              "description": ""
+              "type": "boolean"
             }
           },
           "type": "object",
@@ -415,8 +403,9 @@
                   "min_zoom": 0
                 }
               ],
+              "description": "Select tile layers to use as base layers in map outputs. The first layer in the list will be the bottommost layer displayed.",
+              "ecoscope:advanced": true,
               "items": {
-                "title": "Base Layer",
                 "anyOf": [
                   {
                     "description": "A tiled raster layer loaded on-demand from a URL template (e.g., base maps).",
@@ -434,8 +423,8 @@
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
                         "ecoscope:advanced": true,
-                        "maximum": 1.0,
-                        "minimum": 0.0,
+                        "maximum": 1,
+                        "minimum": 0,
                         "title": "Layer Opacity",
                         "type": "number"
                       }
@@ -459,8 +448,8 @@
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
                         "ecoscope:advanced": true,
-                        "maximum": 1.0,
-                        "minimum": 0.0,
+                        "maximum": 1,
+                        "minimum": 0,
                         "title": "Layer Opacity",
                         "type": "number"
                       }
@@ -484,8 +473,8 @@
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
                         "ecoscope:advanced": true,
-                        "maximum": 1.0,
-                        "minimum": 0.0,
+                        "maximum": 1,
+                        "minimum": 0,
                         "title": "Layer Opacity",
                         "type": "number"
                       }
@@ -509,8 +498,8 @@
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
                         "ecoscope:advanced": true,
-                        "maximum": 1.0,
-                        "minimum": 0.0,
+                        "maximum": 1,
+                        "minimum": 0,
                         "title": "Layer Opacity",
                         "type": "number"
                       }
@@ -534,8 +523,8 @@
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
                         "ecoscope:advanced": true,
-                        "maximum": 1.0,
-                        "minimum": 0.0,
+                        "maximum": 1,
+                        "minimum": 0,
                         "title": "Layer Opacity",
                         "type": "number"
                       }
@@ -557,8 +546,8 @@
                         "default": 1,
                         "description": "Set layer transparency from 1 (fully visible) to 0 (hidden).",
                         "ecoscope:advanced": true,
-                        "maximum": 1.0,
-                        "minimum": 0.0,
+                        "maximum": 1,
+                        "minimum": 0,
                         "title": "Custom Layer Opacity",
                         "type": "number"
                       },
@@ -578,12 +567,11 @@
                     "title": "Custom Layer (Advanced)",
                     "type": "object"
                   }
-                ]
+                ],
+                "title": "Base Layer"
               },
               "title": "Map Base Layers",
-              "type": "array",
-              "description": "Select tile layers to use as base layers in map outputs. The first layer in the list will be the bottommost layer displayed.",
-              "ecoscope:advanced": true
+              "type": "array"
             }
           },
           "type": "object",

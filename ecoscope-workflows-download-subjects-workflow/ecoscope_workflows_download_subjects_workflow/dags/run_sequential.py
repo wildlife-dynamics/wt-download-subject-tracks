@@ -396,6 +396,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             drop_columns=["id"],
             retain_columns=[],
             raise_if_not_found=False,
+            duplicate_strategy="overwrite",
             **(params.get("customize_columns_internally") or {}),
         )
         .call()
@@ -525,6 +526,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
             rename_columns={},
             retain_columns=[],
             raise_if_not_found=False,
+            duplicate_strategy="overwrite",
             **(params.get("customize_columns") or {}),
         )
         .mapvalues(argnames=["df"], argvalues=split_traj_groups)
@@ -856,6 +858,7 @@ def main(params: dict[str, Any], validate_params_schema: bool = True):
                 "subject__name": "Subject Name",
                 "subject__sex": "Subject Sex",
             },
+            duplicate_strategy="overwrite",
             **(params.get("rename_display_columns") or {}),
         )
         .mapvalues(argnames=["df"], argvalues=sort_subject_names)
